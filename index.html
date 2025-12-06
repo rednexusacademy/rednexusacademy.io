@@ -1,1 +1,510 @@
-this is red nexus academy
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Writeups & Research | Red Nexus Academy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        red: {
+                            500: '#ef4444',
+                            600: '#dc2626',
+                            700: '#b91c1c',
+                            900: '#7f1d1d',
+                            glow: 'rgba(239, 68, 68, 0.5)'
+                        },
+                        dark: {
+                            900: '#050505',
+                            800: '#0a0a0a',
+                            700: '#121212',
+                            600: '#1c1c1c',
+                            500: '#2a2a2a'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #050505;
+            color: #e5e5e5;
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a0a0a; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #333; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ef4444; 
+        }
+
+        .red-glow {
+            text-shadow: 0 0 20px rgba(220, 38, 38, 0.5);
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px -10px rgba(239, 68, 68, 0.2);
+            border-color: #ef4444;
+        }
+
+        .bg-grid-pattern {
+            background-image: radial-gradient(#333 1px, transparent 1px);
+            background-size: 30px 30px;
+            mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- Navbar -->
+    <nav class="fixed top-0 w-full z-50 bg-dark-900/90 backdrop-blur-md border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <!-- Logo -->
+                <div class="flex-shrink-0 flex items-center gap-3 cursor-pointer" onclick="window.location.href='https://rednexus.academy'">
+                    <img src="https://rednexusacademy.github.io/logo.png" alt="Red Nexus Academy Logo" class="w-12 h-12 shadow-[0_0_15px_rgba(239,68,68,0.3)] rounded-full">
+                    <span class="font-bold text-xl tracking-tight text-white">RED <span class="text-red-500">NEXUS</span></span>
+                </div>
+
+                <!-- Desktop Menu -->
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-8">
+                        <a href="https://rednexus.academy" class="text-gray-300 hover:text-red-500 hover:bg-white/5 px-3 py-2 rounded-md text-sm font-medium transition-colors">Home</a>
+                        <a href="https://rednexus.academy" class="text-gray-300 hover:text-red-500 hover:bg-white/5 px-3 py-2 rounded-md text-sm font-medium transition-colors">Courses</a>
+                        <a href="https://blog.rednexus.academy" class="text-red-500 bg-red-500/10 border border-red-500/20 px-3 py-2 rounded-md text-sm font-medium transition-colors">Writeups</a>
+                        <a href="#" class="text-gray-300 hover:text-red-500 hover:bg-white/5 px-3 py-2 rounded-md text-sm font-medium transition-colors">Paths</a>
+                        <a href="https://t.me/rednexus2" target="_blank" class="text-gray-300 hover:text-red-500 hover:bg-white/5 px-3 py-2 rounded-md text-sm font-medium transition-colors">Community</a>
+                    </div>
+                </div>
+
+                <!-- CTA & Mobile Button -->
+                <div class="flex items-center gap-4">
+                    <button onclick="document.getElementById('construction-modal').classList.remove('hidden')" class="hidden md:inline-flex items-center justify-center px-5 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 transition-all shadow-[0_0_15px_rgba(220,38,38,0.4)] hover:shadow-[0_0_25px_rgba(220,38,38,0.6)]">
+                        Student Login
+                    </button>
+                    <div class="-mr-2 flex md:hidden">
+                        <button type="button" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')" class="bg-dark-800 inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-dark-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-800 focus:ring-white">
+                            <span class="sr-only">Open main menu</span>
+                            <i data-lucide="menu" class="w-6 h-6"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div class="hidden md:hidden bg-dark-800 border-b border-white/10" id="mobile-menu">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <a href="https://rednexus.academy" class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Home</a>
+                <a href="https://rednexus.academy" class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Courses</a>
+                <a href="https://blog.rednexus.academy" class="text-red-500 bg-red-900/20 block px-3 py-2 rounded-md text-base font-medium">Writeups</a>
+                <a href="#" class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Paths</a>
+                <a href="https://t.me/rednexus2" class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Community</a>
+                <button onclick="document.getElementById('construction-modal').classList.remove('hidden')" class="w-full text-center mt-4 px-5 py-3 rounded-md font-medium text-white bg-red-600 hover:bg-red-700">Login</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow pt-20">
+        
+        <!-- Hero Section with Search -->
+        <div class="relative bg-dark-900 overflow-hidden border-b border-white/5">
+            <div class="absolute inset-0 bg-grid-pattern opacity-20 pointer-events-none"></div>
+            <div class="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-red-600 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-pulse-slow"></div>
+            <div class="absolute bottom-0 left-0 -ml-20 -mb-20 w-96 h-96 bg-red-900 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-pulse-slow"></div>
+
+            <div class="relative max-w-7xl mx-auto py-16 px-4 sm:py-24 sm:px-6 lg:px-8 text-center">
+                <span class="text-red-500 font-mono text-sm tracking-wider uppercase mb-2 block">Knowledge Base</span>
+                <h1 class="text-4xl font-extrabold text-white sm:text-5xl sm:tracking-tight lg:text-6xl">
+                    Security <span class="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-red-300 red-glow">Writeups</span>
+                </h1>
+                <p class="mt-4 max-w-2xl mx-auto text-xl text-gray-400">
+                    Deep dives into CTF challenges, CVE analysis, and red teaming tradecraft.
+                </p>
+
+                <!-- Search Bar -->
+                <div class="mt-8 max-w-xl mx-auto">
+                    <div class="relative group">
+                        <div class="absolute -inset-0.5 bg-gradient-to-r from-red-600 to-red-900 rounded-lg blur opacity-30 group-hover:opacity-60 transition duration-200"></div>
+                        <div class="relative flex items-center bg-dark-800 rounded-lg border border-white/10 shadow-2xl">
+                            <div class="pl-4 text-gray-400">
+                                <i data-lucide="search" class="w-5 h-5"></i>
+                            </div>
+                            <input type="text" 
+                                   class="block w-full bg-transparent border-none text-gray-200 placeholder-gray-500 focus:ring-0 focus:outline-none py-4 pl-3 pr-4" 
+                                   placeholder="Search writeups (e.g., 'Buffer Overflow', 'HTB', 'Active Directory')...">
+                            <div class="hidden sm:flex pr-2">
+                                <kbd class="inline-flex items-center border border-gray-600 rounded px-2 text-sm font-sans font-medium text-gray-500">⌘K</kbd>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tags/Quick Filters -->
+                <div class="mt-6 flex flex-wrap justify-center gap-2">
+                    <a href="#" class="px-3 py-1 rounded-full text-xs font-medium bg-dark-700 text-gray-300 hover:text-white hover:bg-dark-600 border border-white/5 transition-colors">#ActiveDirectory</a>
+                    <a href="#" class="px-3 py-1 rounded-full text-xs font-medium bg-dark-700 text-gray-300 hover:text-white hover:bg-dark-600 border border-white/5 transition-colors">#WebExploitation</a>
+                    <a href="#" class="px-3 py-1 rounded-full text-xs font-medium bg-dark-700 text-gray-300 hover:text-white hover:bg-dark-600 border border-white/5 transition-colors">#BugBounty</a>
+                    <a href="#" class="px-3 py-1 rounded-full text-xs font-medium bg-dark-700 text-gray-300 hover:text-white hover:bg-dark-600 border border-white/5 transition-colors">#OSCP</a>
+                    <a href="#" class="px-3 py-1 rounded-full text-xs font-medium bg-dark-700 text-gray-300 hover:text-white hover:bg-dark-600 border border-white/5 transition-colors">#BlueTeam</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Grid -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                
+                <!-- Main Blog Feed (Left 3 cols) -->
+                <div class="lg:col-span-3 space-y-8">
+                    
+                    <!-- Featured Post -->
+                    <a href="https://blog.rednexus.academy/writeups/bloodhound-1.html" class="block relative rounded-2xl overflow-hidden group cursor-pointer border border-white/10 bg-dark-800 shadow-2xl">
+                        <div class="absolute inset-0 bg-gradient-to-t from-dark-900 via-dark-900/80 to-transparent z-10"></div>
+                        <!-- Placeholder Background Pattern -->
+                        <div class="h-64 sm:h-80 lg:h-96 w-full bg-dark-700 relative">
+                             <div class="absolute inset-0 flex items-center justify-center opacity-20">
+                                <i data-lucide="network" class="w-32 h-32 sm:w-64 sm:h-64 text-red-900"></i>
+                             </div>
+                             <img src="https://blog.rednexus.academy/resources/bloodhound.png" alt="Bloodhound Deep Dive" class="w-full h-full object-cover opacity-50 group-hover:scale-105 transition-transform duration-700">
+                        </div>
+                        
+                        <div class="absolute bottom-0 left-0 p-6 sm:p-8 z-20 w-full">
+                            <div class="flex items-center gap-2 mb-3">
+                                <span class="px-2 py-1 bg-red-600 text-white text-xs font-bold rounded uppercase tracking-wide">Featured</span>
+                                <span class="text-gray-400 text-xs font-mono"><i data-lucide="calendar" class="inline w-3 h-3 mr-1"></i> Dec 06, 2025</span>
+                            </div>
+                            <h2 class="text-2xl sm:text-3xl font-bold text-white mb-2 group-hover:text-red-400 transition-colors">Bloodhound Deep Dive: Installation and Enumeration</h2>
+                            <p class="text-gray-300 mb-4 line-clamp-2 max-w-3xl text-sm sm:text-base">A comprehensive guide to setting up Bloodhound for Active Directory reconnaissance. Learn how to install collectors, run SharpHound, and visualize attack paths within the domain environment.</p>
+                            <div class="flex items-center gap-4">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center text-xs font-bold">RN</div>
+                                    <span class="text-sm font-medium text-white">RedNexus Team</span>
+                                </div>
+                                <span class="text-gray-500 text-sm">•</span>
+                                <span class="text-gray-400 text-sm">20 min read</span>
+                            </div>
+                        </div>
+                    </a>
+
+                    <!-- Filter Tabs -->
+                    <div class="flex items-center border-b border-white/10 mb-6 overflow-x-auto">
+                        <button class="px-4 py-3 text-red-500 border-b-2 border-red-500 font-medium text-sm whitespace-nowrap">Latest</button>
+                        <button class="px-4 py-3 text-gray-400 hover:text-white font-medium text-sm whitespace-nowrap transition-colors">CTF Walkthroughs</button>
+                        <button class="px-4 py-3 text-gray-400 hover:text-white font-medium text-sm whitespace-nowrap transition-colors">Research</button>
+                        <button class="px-4 py-3 text-gray-400 hover:text-white font-medium text-sm whitespace-nowrap transition-colors">Tutorials</button>
+                    </div>
+
+                    <!-- Post Grid -->
+                    <div class="grid md:grid-cols-2 gap-6">
+                        
+                        <!-- Card 1 -->
+                        <article class="bg-dark-800 rounded-xl border border-white/5 overflow-hidden card-hover transition-all duration-300 flex flex-col h-full">
+                            <div class="h-48 bg-dark-700 relative overflow-hidden group">
+                                <div class="absolute inset-0 bg-gradient-to-t from-dark-800 to-transparent opacity-60"></div>
+                                <div class="absolute top-4 right-4 bg-dark-900/80 backdrop-blur px-2 py-1 rounded text-xs font-mono text-red-400 border border-red-500/30">HTB: Hard</div>
+                                <div class="w-full h-full flex items-center justify-center bg-dark-700">
+                                    <i data-lucide="box" class="w-16 h-16 text-gray-600 group-hover:text-red-500 transition-colors"></i>
+                                </div>
+                            </div>
+                            <div class="p-5 flex-1 flex flex-col">
+                                <div class="flex gap-2 mb-3">
+                                    <span class="text-xs font-medium text-red-400">Walkthrough</span>
+                                    <span class="text-xs text-gray-500">Nov 28, 2025</span>
+                                </div>
+                                <h3 class="text-xl font-bold text-white mb-2 hover:text-red-500 cursor-pointer transition-colors">HackTheBox: Insomnia</h3>
+                                <p class="text-gray-400 text-sm mb-4 flex-1">Pwning a hard Windows machine involving Active Directory enumeration, Kerberoasting, and a custom .NET deserialization exploit.</p>
+                                <div class="mt-auto pt-4 border-t border-white/5 flex justify-between items-center">
+                                    <span class="text-xs text-gray-500 font-mono">By 0xShadow</span>
+                                    <a href="#" class="text-sm font-medium text-red-500 hover:text-red-400 flex items-center gap-1">Read <i data-lucide="arrow-right" class="w-4 h-4"></i></a>
+                                </div>
+                            </div>
+                        </article>
+
+                        <!-- Card 2 -->
+                        <article class="bg-dark-800 rounded-xl border border-white/5 overflow-hidden card-hover transition-all duration-300 flex flex-col h-full">
+                            <div class="h-48 bg-dark-700 relative overflow-hidden group">
+                                <div class="absolute inset-0 bg-gradient-to-t from-dark-800 to-transparent opacity-60"></div>
+                                <div class="absolute top-4 right-4 bg-dark-900/80 backdrop-blur px-2 py-1 rounded text-xs font-mono text-green-400 border border-green-500/30">Bug Bounty</div>
+                                <div class="w-full h-full flex items-center justify-center bg-dark-700">
+                                    <i data-lucide="dollar-sign" class="w-16 h-16 text-gray-600 group-hover:text-green-500 transition-colors"></i>
+                                </div>
+                            </div>
+                            <div class="p-5 flex-1 flex flex-col">
+                                <div class="flex gap-2 mb-3">
+                                    <span class="text-xs font-medium text-green-400">Web Security</span>
+                                    <span class="text-xs text-gray-500">Nov 20, 2025</span>
+                                </div>
+                                <h3 class="text-xl font-bold text-white mb-2 hover:text-red-500 cursor-pointer transition-colors">IDOR to Account Takeover</h3>
+                                <p class="text-gray-400 text-sm mb-4 flex-1">How I chained a simple IDOR vulnerability with a logic flaw to takeover administrator accounts on a private bug bounty program.</p>
+                                <div class="mt-auto pt-4 border-t border-white/5 flex justify-between items-center">
+                                    <span class="text-xs text-gray-500 font-mono">By HunterX</span>
+                                    <a href="#" class="text-sm font-medium text-red-500 hover:text-red-400 flex items-center gap-1">Read <i data-lucide="arrow-right" class="w-4 h-4"></i></a>
+                                </div>
+                            </div>
+                        </article>
+
+                        <!-- Card 3 -->
+                        <article class="bg-dark-800 rounded-xl border border-white/5 overflow-hidden card-hover transition-all duration-300 flex flex-col h-full">
+                            <div class="h-48 bg-dark-700 relative overflow-hidden group">
+                                <div class="absolute inset-0 bg-gradient-to-t from-dark-800 to-transparent opacity-60"></div>
+                                <div class="absolute top-4 right-4 bg-dark-900/80 backdrop-blur px-2 py-1 rounded text-xs font-mono text-blue-400 border border-blue-500/30">Blue Team</div>
+                                <div class="w-full h-full flex items-center justify-center bg-dark-700">
+                                    <i data-lucide="activity" class="w-16 h-16 text-gray-600 group-hover:text-blue-500 transition-colors"></i>
+                                </div>
+                            </div>
+                            <div class="p-5 flex-1 flex flex-col">
+                                <div class="flex gap-2 mb-3">
+                                    <span class="text-xs font-medium text-blue-400">Detection</span>
+                                    <span class="text-xs text-gray-500">Nov 15, 2025</span>
+                                </div>
+                                <h3 class="text-xl font-bold text-white mb-2 hover:text-red-500 cursor-pointer transition-colors">Detecting Cobalt Strike Beacons</h3>
+                                <p class="text-gray-400 text-sm mb-4 flex-1">Analyzing memory patterns and network traffic signatures to identify hidden Cobalt Strike beacons within a compromised network environment.</p>
+                                <div class="mt-auto pt-4 border-t border-white/5 flex justify-between items-center">
+                                    <span class="text-xs text-gray-500 font-mono">By BlueSentinel</span>
+                                    <a href="#" class="text-sm font-medium text-red-500 hover:text-red-400 flex items-center gap-1">Read <i data-lucide="arrow-right" class="w-4 h-4"></i></a>
+                                </div>
+                            </div>
+                        </article>
+
+                        <!-- Card 4 -->
+                        <article class="bg-dark-800 rounded-xl border border-white/5 overflow-hidden card-hover transition-all duration-300 flex flex-col h-full">
+                            <div class="h-48 bg-dark-700 relative overflow-hidden group">
+                                <div class="absolute inset-0 bg-gradient-to-t from-dark-800 to-transparent opacity-60"></div>
+                                <div class="absolute top-4 right-4 bg-dark-900/80 backdrop-blur px-2 py-1 rounded text-xs font-mono text-purple-400 border border-purple-500/30">Bash</div>
+                                <div class="w-full h-full flex items-center justify-center bg-dark-700">
+                                    <i data-lucide="terminal" class="w-16 h-16 text-gray-600 group-hover:text-purple-500 transition-colors"></i>
+                                </div>
+                            </div>
+                            <div class="p-5 flex-1 flex flex-col">
+                                <div class="flex gap-2 mb-3">
+                                    <span class="text-xs font-medium text-purple-400">Automation</span>
+                                    <span class="text-xs text-gray-500">Nov 10, 2025</span>
+                                </div>
+                                <h3 class="text-xl font-bold text-white mb-2 hover:text-red-500 cursor-pointer transition-colors">Automating Recon with Bash</h3>
+                                <p class="text-gray-400 text-sm mb-4 flex-1">Stop doing manual recon. This guide teaches you how to script subdomain enumeration, port scanning, and screenshotting into a single tool.</p>
+                                <div class="mt-auto pt-4 border-t border-white/5 flex justify-between items-center">
+                                    <span class="text-xs text-gray-500 font-mono">By ScriptKiddieNoMore</span>
+                                    <a href="#" class="text-sm font-medium text-red-500 hover:text-red-400 flex items-center gap-1">Read <i data-lucide="arrow-right" class="w-4 h-4"></i></a>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div class="flex justify-center mt-12">
+                        <nav class="flex items-center space-x-2">
+                            <a href="#" class="px-3 py-2 rounded-md border border-white/10 bg-dark-800 text-gray-400 hover:bg-dark-700 hover:text-white">Previous</a>
+                            <a href="#" class="px-3 py-2 rounded-md bg-red-600 text-white font-medium">1</a>
+                            <a href="#" class="px-3 py-2 rounded-md border border-white/10 bg-dark-800 text-gray-400 hover:bg-dark-700 hover:text-white">2</a>
+                            <a href="#" class="px-3 py-2 rounded-md border border-white/10 bg-dark-800 text-gray-400 hover:bg-dark-700 hover:text-white">3</a>
+                            <span class="text-gray-600">...</span>
+                            <a href="#" class="px-3 py-2 rounded-md border border-white/10 bg-dark-800 text-gray-400 hover:bg-dark-700 hover:text-white">Next</a>
+                        </nav>
+                    </div>
+                </div>
+
+                <!-- Sidebar (Right Col) -->
+                <div class="lg:col-span-1 space-y-8">
+                    
+                    <!-- Newsletter -->
+                    <div class="bg-dark-800 rounded-xl p-6 border border-white/5 shadow-lg">
+                        <h3 class="text-lg font-bold text-white mb-2">Subscribe to the Nexus</h3>
+                        <p class="text-sm text-gray-400 mb-4">Get the latest exploits and research delivered to your inbox weekly.</p>
+                        <form class="space-y-3">
+                            <input type="email" placeholder="enter@email.com" class="w-full bg-dark-900 border border-white/10 rounded-md px-3 py-2 text-sm text-white focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500">
+                            <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md text-sm transition-colors shadow-lg shadow-red-900/20">Subscribe</button>
+                        </form>
+                    </div>
+
+                    <!-- Categories -->
+                    <div class="bg-dark-800 rounded-xl p-6 border border-white/5">
+                        <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                            <i data-lucide="folder" class="w-4 h-4 text-red-500"></i> Categories
+                        </h3>
+                        <div class="space-y-2">
+                            <a href="#" class="flex justify-between items-center text-sm text-gray-400 hover:text-red-400 group transition-colors">
+                                <span>Web Exploitation</span>
+                                <span class="bg-dark-900 px-2 py-0.5 rounded-full text-xs text-gray-500 group-hover:text-red-400">24</span>
+                            </a>
+                            <a href="#" class="flex justify-between items-center text-sm text-gray-400 hover:text-red-400 group transition-colors">
+                                <span>Network Pentesting</span>
+                                <span class="bg-dark-900 px-2 py-0.5 rounded-full text-xs text-gray-500 group-hover:text-red-400">18</span>
+                            </a>
+                            <a href="#" class="flex justify-between items-center text-sm text-gray-400 hover:text-red-400 group transition-colors">
+                                <span>Red Teaming</span>
+                                <span class="bg-dark-900 px-2 py-0.5 rounded-full text-xs text-gray-500 group-hover:text-red-400">12</span>
+                            </a>
+                            <a href="#" class="flex justify-between items-center text-sm text-gray-400 hover:text-red-400 group transition-colors">
+                                <span>Source Code Review</span>
+                                <span class="bg-dark-900 px-2 py-0.5 rounded-full text-xs text-gray-500 group-hover:text-red-400">8</span>
+                            </a>
+                            <a href="#" class="flex justify-between items-center text-sm text-gray-400 hover:text-red-400 group transition-colors">
+                                <span>CTF Walkthroughs</span>
+                                <span class="bg-dark-900 px-2 py-0.5 rounded-full text-xs text-gray-500 group-hover:text-red-400">45</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Popular Tags -->
+                    <div class="bg-dark-800 rounded-xl p-6 border border-white/5">
+                        <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                            <i data-lucide="hash" class="w-4 h-4 text-red-500"></i> Trending
+                        </h3>
+                        <div class="flex flex-wrap gap-2">
+                            <a href="#" class="px-2 py-1 bg-dark-900 hover:bg-red-900/30 text-xs text-gray-400 hover:text-red-400 rounded border border-white/5 transition-colors">CVE-2025-1337</a>
+                            <a href="#" class="px-2 py-1 bg-dark-900 hover:bg-red-900/30 text-xs text-gray-400 hover:text-red-400 rounded border border-white/5 transition-colors">BurpSuite</a>
+                            <a href="#" class="px-2 py-1 bg-dark-900 hover:bg-red-900/30 text-xs text-gray-400 hover:text-red-400 rounded border border-white/5 transition-colors">Python</a>
+                            <a href="#" class="px-2 py-1 bg-dark-900 hover:bg-red-900/30 text-xs text-gray-400 hover:text-red-400 rounded border border-white/5 transition-colors">PrivEsc</a>
+                            <a href="#" class="px-2 py-1 bg-dark-900 hover:bg-red-900/30 text-xs text-gray-400 hover:text-red-400 rounded border border-white/5 transition-colors">Metasploit</a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Join CTA -->
+        <section class="bg-gradient-to-r from-red-900/20 to-dark-900 border-t border-b border-white/5 py-16">
+            <div class="max-w-4xl mx-auto px-4 text-center">
+                <h2 class="text-3xl font-bold text-white mb-4">Ready to level up your skills?</h2>
+                <p class="text-gray-300 mb-8 text-lg">Join thousands of students learning practical cybersecurity, red teaming, and ethical hacking.</p>
+                <a href="https://rednexus.academy" class="inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-red-600 hover:bg-red-700 md:text-lg transition-all shadow-lg hover:shadow-red-900/50">
+                    Explore Courses
+                </a>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark-900 border-t border-white/10 pt-12 pb-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+                
+                <!-- Brand Col -->
+                <div class="col-span-1 md:col-span-1">
+                    <div class="flex items-center gap-2 mb-4">
+                        <img src="https://rednexusacademy.github.io/logo.png" alt="Red Nexus Academy Logo" class="w-10 h-10 rounded-full">
+                        <span class="font-bold text-lg text-white">RED <span class="text-red-500">NEXUS</span></span>
+                    </div>
+                    <p class="text-gray-400 text-sm leading-relaxed mb-6">
+                        Advanced cybersecurity training for the next generation of penetration testers and red teamers.
+                    </p>
+                    <div class="flex space-x-4">
+                        <a href="https://x.com/rednexusacademy" target="_blank" class="text-gray-400 hover:text-white"><i data-lucide="twitter" class="w-5 h-5"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white"><i data-lucide="github" class="w-5 h-5"></i></a>
+                        <a href="https://www.youtube.com/@RedNexusYT" target="_blank" class="text-gray-400 hover:text-white"><i data-lucide="youtube" class="w-5 h-5"></i></a>
+                        <a href="https://www.linkedin.com/company/rednexus" target="_blank" class="text-gray-400 hover:text-white"><i data-lucide="linkedin" class="w-5 h-5"></i></a>
+                    </div>
+                </div>
+
+                <!-- Links Col 1 -->
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-200 tracking-wider uppercase mb-4">Platform</h3>
+                    <ul class="space-y-3">
+                        <li><a href="https://rednexus.academy" class="text-gray-400 hover:text-red-500 text-sm transition-colors">All Courses</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-red-500 text-sm transition-colors">Learning Paths</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-red-500 text-sm transition-colors">Labs</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-red-500 text-sm transition-colors">Pricing</a></li>
+                    </ul>
+                </div>
+
+                <!-- Links Col 2 -->
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-200 tracking-wider uppercase mb-4">Community</h3>
+                    <ul class="space-y-3">
+                        <li><a href="https://t.me/rednexus2" target="_blank" class="text-gray-400 hover:text-red-500 text-sm transition-colors">Telegram Community</a></li>
+                        <li><a href="https://blog.rednexus.academy" class="text-gray-400 hover:text-red-500 text-sm transition-colors">Blog / Writeups</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-red-500 text-sm transition-colors">Instructors</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-red-500 text-sm transition-colors">Success Stories</a></li>
+                    </ul>
+                </div>
+
+                <!-- Links Col 3 -->
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-200 tracking-wider uppercase mb-4">Legal & Contact</h3>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="text-gray-400 hover:text-red-500 text-sm transition-colors">Privacy Policy</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-red-500 text-sm transition-colors">Terms of Service</a></li>
+                        <li><a href="https://wa.me/+201003425890" target="_blank" class="text-gray-400 hover:text-red-500 text-sm transition-colors">Contact Us (WhatsApp)</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center">
+                <p class="text-gray-500 text-sm">&copy; 2025 Red Nexus Academy. All rights reserved.</p>
+                <div class="flex items-center gap-2 mt-4 md:mt-0 text-gray-500 text-sm">
+                    <span>Made with</span>
+                    <i data-lucide="code" class="w-4 h-4 text-red-500"></i>
+                    <span>for Hackers</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Construction Modal -->
+    <div id="construction-modal" class="fixed inset-0 z-[100] hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity"></div>
+        <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+            <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                <div class="relative transform overflow-hidden rounded-lg bg-dark-800 border border-white/10 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-sm p-6">
+                    <div>
+                        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-900/20">
+                            <i data-lucide="cone" class="h-6 w-6 text-red-500"></i>
+                        </div>
+                        <div class="mt-3 text-center sm:mt-5">
+                            <h3 class="text-base font-semibold leading-6 text-white" id="modal-title">Under Construction</h3>
+                            <div class="mt-2">
+                                <p class="text-sm text-gray-400">The Student Portal is currently being built. Please check back later!</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-5 sm:mt-6">
+                        <button type="button" onclick="document.getElementById('construction-modal').classList.add('hidden')" class="inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600">Got it</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
+        // Search shortcut listener
+        document.addEventListener('keydown', function(e) {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                document.querySelector('input[type="text"]').focus();
+            }
+        });
+    </script>
+</body>
+</html>
