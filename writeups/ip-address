@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Networking Fundamentals: IP Addressing, NAT & Subnetting</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            scroll-behavior: smooth;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f9fafb; /* gray-50 */
+        }
+        .code-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        /* Base terminal prompt style */
+        .terminal-prompt::before {
+            content: 'C:\\> ';
+            color: #10b981; /* emerald-500 */
+            margin-right: 0.5rem;
+            user-select: none;
+        }
+        .terminal-output {
+            white-space: pre-wrap;
+            color: #e5e7eb; /* gray-200 */
+            padding-top: 8px;
+            border-top: 1px solid #334155; /* slate-700 */
+            margin-top: 8px;
+        }
+        .bg-console {
+            background-color: #1e293b; /* slate-800 */
+        }
+        .visual-step {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+            background-color: #ffffff;
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+        }
+        .step-list {
+            list-style: none;
+            counter-reset: step-counter;
+        }
+        .step-list > li {
+            counter-increment: step-counter;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: flex-start;
+        }
+        .step-list > li::before {
+            content: counter(step-counter);
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 2rem;
+            height: 2rem;
+            min-width: 2rem;
+            border-radius: 9999px;
+            background-color: #f59e0b; /* amber-500 */
+            color: white;
+            font-weight: bold;
+            margin-right: 1rem;
+        }
+        .code-block-wrapper {
+            position: relative;
+        }
+        .copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #e5e7eb;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 0.375rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            opacity: 0;
+        }
+        .code-block-wrapper:hover .copy-btn {
+            opacity: 1;
+        }
+        .copy-btn.copied {
+            background-color: #10b981;
+            color: white;
+            border-color: #10b981;
+        }
+        .goog-te-gadget {
+            font-family: 'Inter', sans-serif !important;
+            font-size: 0px !important;
+        }
+        .goog-te-gadget .goog-te-combo {
+            margin: 0 !important;
+            padding: 0.5rem !important;
+            border-radius: 0.375rem !important;
+            border: 1px solid #e5e7eb !important;
+            font-size: 0.875rem !important;
+            color: #374151 !important;
+            background-color: white !important;
+            outline: none;
+        }
+        .goog-te-gadget span {
+            display: none !important;
+        }
+        .goog-te-banner-frame {
+            display: none !important;
+        }
+        body {
+            top: 0 !important;
+        }
+
+        /* Interactive Element Styling */
+        .octet-input, .calc-input {
+            width: 4.5rem;
+            text-align: center;
+            padding: 0.5rem;
+            border: 2px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: bold;
+            font-size: 1.125rem;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .calc-input {
+            width: 4rem;
+        }
+        .octet-input:focus, .calc-input:focus {
+            border-color: #0e7490;
+            box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.2);
+        }
+        .octet-input.invalid, .calc-input.invalid {
+            border-color: #ef4444;
+            background-color: #fef2f2;
+        }
+        .octet-input.valid, .calc-input.valid {
+            border-color: #10b981;
+            background-color: #f0fdf4;
+        }
+    </style>
+</head>
+<body class="text-gray-700 relative">
+
+    <button id="scrollToTopBtn" class="fixed bottom-8 right-8 bg-cyan-700 text-white p-3 rounded-full shadow-lg opacity-0 transition-opacity duration-300 hover:bg-cyan-800 focus:outline-none z-50 pointer-events-none">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <header class="bg-white/95 backdrop-blur-md sticky top-0 z-50 shadow-lg border-b border-cyan-700/30">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <a href="https://www.rednexus.academy" class="flex items-center">
+                        <img src="https://rednexus.academy/assets/rednexus_logo-D4Odd875.png" alt="RedNexus" class="h-10 w-auto mr-3 rounded-md bg-black p-1">
+                    </a>
+                    <a href="https://blogs.rednexus.academy" class="text-cyan-700 border border-cyan-700 hover:bg-cyan-50 transition duration-150 ease-in-out px-4 py-2 rounded-md font-bold text-sm">
+                        Blogs
+                    </a>
+                </div>
+                
+                <div class="hidden md:flex md:items-center md:space-x-4">
+                    <a href="https://rednexus.academy/certificates" class="text-gray-600 hover:text-cyan-700 px-3 py-2 rounded-md font-bold text-sm">Certificates</a>
+                    <a href="https://rednexus.academy/courses" class="text-gray-600 hover:text-cyan-700 px-3 py-2 rounded-md font-bold text-sm">Courses</a>
+                    <a href="https://hossamshady.medium.com/" class="text-gray-600 hover:text-cyan-700 px-3 py-2 rounded-md font-bold text-sm">Medium</a>
+                    <a href="https://rednexus.academy/faq" class="text-gray-600 hover:text-cyan-700 px-3 py-2 rounded-md font-bold text-sm">FAQ</a>
+                    <a href="https://rednexus.academy/events" class="text-gray-600 hover:text-cyan-700 px-3 py-2 rounded-md font-bold text-sm">Events</a>
+
+                    <a href="mailto:support@rednexus.academy" class="text-cyan-700 border border-cyan-700 hover:bg-cyan-50 transition duration-150 ease-in-out px-4 py-2 rounded-md font-bold text-sm ml-2">
+                        Contact Us
+                    </a>
+                    <div id="google_translate_element" class="ml-2"></div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16">
+
+        <section id="intro-header" class="mb-16">
+            <div class="bg-white p-8 rounded-xl shadow-2xl border border-gray-300 text-center">
+                <h1 class="text-4xl font-extrabold text-cyan-700 mb-0">Networking: Understanding IP, NAT, and Subnetting</h1>
+            </div>
+        </section>
+
+        <!-- Section 1: Identifying IP Addresses -->
+        <section id="identification" class="mb-16 pt-10 -mt-10">
+            <h2 class="text-3xl font-bold text-cyan-700 mb-6">1. Identifying IPv4 and IPv6</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-xl shadow border border-gray-200 text-center">
+                    <h3 class="text-xl font-bold text-indigo-700 mb-3">IPv4 (32-Bit)</h3>
+                    <p class="text-sm text-gray-600 mb-4">Uses 32 binary bits divided into 4 octets.</p>
+                    <div class="bg-slate-100 p-3 rounded code-font text-lg font-bold text-indigo-800">192.168.1.1</div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow border border-gray-200 text-center">
+                    <h3 class="text-xl font-bold text-purple-700 mb-3">IPv6 (128-Bit)</h3>
+                    <p class="text-sm text-gray-600 mb-4">Uses 128 binary bits in hexadecimal format.</p>
+                    <div class="bg-slate-100 p-3 rounded code-font text-sm font-bold text-purple-800">2001:0db8:85a3:0000:0000:8a2e:0370:7334</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Interactive IP Validation Tool -->
+        <section id="ip-validator" class="mb-16 pt-10 -mt-10">
+            <h2 class="text-3xl font-bold text-cyan-700 mb-6">2. Interactive Lab: Octet Validation</h2>
+            <div class="bg-white p-8 rounded-xl shadow-2xl border border-gray-300">
+                <div class="flex flex-col items-center">
+                    <div class="flex items-center space-x-2 mb-6">
+                        <input type="text" maxlength="3" placeholder="0" class="octet-input" id="octet1">
+                        <span class="font-bold text-2xl">.</span>
+                        <input type="text" maxlength="3" placeholder="0" class="octet-input" id="octet2">
+                        <span class="font-bold text-2xl">.</span>
+                        <input type="text" maxlength="3" placeholder="0" class="octet-input" id="octet3">
+                        <span class="font-bold text-2xl">.</span>
+                        <input type="text" maxlength="3" placeholder="0" class="octet-input" id="octet4">
+                    </div>
+                    <div id="validation-result" class="text-center px-6 py-3 rounded-lg font-bold text-lg hidden transition-all duration-300"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Subnet Mask -->
+        <section id="subnetting" class="mb-16 pt-10 -mt-10">
+            <h2 class="text-3xl font-bold text-cyan-700 mb-6">3. The Subnet Mask: Defining Boundaries</h2>
+            <p class="text-gray-600 mb-6">
+                An IP address contains two pieces of information: the <b>Network ID</b> and the <b>Host ID</b>. The <b>Subnet Mask</b> is what tells the computer where the network ends and the host begins.
+            </p>
+
+            <div class="bg-white p-6 rounded-xl shadow-2xl border border-gray-300">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <h4 class="font-bold text-gray-800 mb-2 border-b">The Logic</h4>
+                        <p class="text-sm text-gray-600">A Subnet Mask looks like an IP address (e.g., <code>255.255.255.0</code>). 
+                        Where you see <code>255</code>, it means "This part is the Network Address." 
+                        Where you see <code>0</code>, it means "This part is for individual Devices."</p>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                        <p class="font-bold text-sm text-gray-700 mb-2">Example: 192.168.1.50</p>
+                        <p class="text-xs text-gray-600">If Mask is <b>255.255.255.0</b>:</p>
+                        <p class="text-sm code-font mt-1"><span class="text-cyan-700 font-bold">192.168.1.</span><span class="text-amber-600">50</span></p>
+                        <p class="text-xs text-gray-500 mt-1"><span class="text-cyan-700">Network Portion</span> | <span class="text-amber-600">Host Portion</span></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: CIDR Notation -->
+        <section id="cidr" class="mb-16 pt-10 -mt-10">
+            <h2 class="text-3xl font-bold text-cyan-700 mb-6">4. CIDR Notation (Shorthand)</h2>
+            <p class="text-gray-600 mb-6">
+                Typing <code>255.255.255.0</code> is slow. Engineers use <b>CIDR (Classless Inter-Domain Routing)</b> notation instead. It counts the number of "1" bits in the mask.
+            </p>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-300 text-sm bg-white rounded-lg shadow border border-gray-200">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="px-6 py-3 text-left font-bold">CIDR Prefix</th>
+                            <th class="px-6 py-3 text-left font-bold">Decimal Mask</th>
+                            <th class="px-6 py-3 text-left font-bold">Available Hosts</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        <tr>
+                            <td class="px-6 py-4 code-font font-bold">/8</td>
+                            <td class="px-6 py-4 code-font">255.0.0.0</td>
+                            <td class="px-6 py-4">16.7 Million</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 code-font font-bold">/16</td>
+                            <td class="px-6 py-4 code-font">255.255.0.0</td>
+                            <td class="px-6 py-4">65,536</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 code-font font-bold">/24</td>
+                            <td class="px-6 py-4 code-font">255.255.255.0</td>
+                            <td class="px-6 py-4">254</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 code-font font-bold">/32</td>
+                            <td class="px-6 py-4 code-font">255.255.255.255</td>
+                            <td class="px-6 py-4">1 (A single specific IP)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Section 5: Subnet Mask Calculator -->
+        <section id="subnet-calculator" class="mb-16 pt-10 -mt-10">
+            <h2 class="text-3xl font-bold text-cyan-700 mb-6">5. Professional Subnet Calculator</h2>
+            <p class="text-gray-600 mb-6">
+                Enter an IP address and a CIDR prefix below to calculate the network's technical details instantly. The <b>Usable Host Range</b> highlights the part of the IP that changes for each host.
+            </p>
+
+            <div class="bg-white p-8 rounded-xl shadow-2xl border border-gray-300">
+                <div class="flex flex-col md:flex-row items-center justify-center gap-4 mb-8">
+                    <div class="flex items-center space-x-1">
+                        <input type="text" maxlength="3" placeholder="192" class="calc-input" id="c-o1">
+                        <span class="font-bold">.</span>
+                        <input type="text" maxlength="3" placeholder="168" class="calc-input" id="c-o2">
+                        <span class="font-bold">.</span>
+                        <input type="text" maxlength="3" placeholder="1" class="calc-input" id="c-o3">
+                        <span class="font-bold">.</span>
+                        <input type="text" maxlength="3" placeholder="1" class="calc-input" id="c-o4">
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-2xl font-bold">/</span>
+                        <input type="text" maxlength="2" placeholder="24" class="calc-input w-16" id="c-cidr">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                        <p class="text-xs uppercase tracking-wider font-bold text-gray-500 mb-1">Subnet Mask</p>
+                        <p class="text-lg font-bold text-cyan-700 code-font" id="res-mask">255.255.255.0</p>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                        <p class="text-xs uppercase tracking-wider font-bold text-gray-500 mb-1">Network Address</p>
+                        <p class="text-lg font-bold text-indigo-700 code-font" id="res-net">192.168.1.0</p>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                        <p class="text-xs uppercase tracking-wider font-bold text-gray-500 mb-1">Broadcast Address</p>
+                        <p class="text-lg font-bold text-red-700 code-font" id="res-broad">192.168.1.255</p>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                        <p class="text-xs uppercase tracking-wider font-bold text-gray-500 mb-1">Usable Host Range</p>
+                        <p class="text-sm font-bold text-gray-700 code-font" id="res-range">
+                            192.168.1.<span class="text-amber-600">1</span> - 192.168.1.<span class="text-amber-600">254</span>
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="mt-6 text-center">
+                    <p class="text-xs text-gray-500">Total Usable Hosts: <span id="res-hosts" class="font-bold">254</span></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 6: NAT Protocol -->
+        <section id="nat-protocol" class="mb-16 pt-10 -mt-10">
+            <h2 class="text-3xl font-bold text-cyan-700 mb-6">6. NAT Protocol: The Bridge</h2>
+            <div class="bg-white p-6 rounded-xl shadow-2xl border border-gray-300">
+                <p class="text-sm text-gray-600 mb-6"><b>NAT (Network Address Translation)</b> maps your local addresses to your single public IP so you can access the world.</p>
+                <div class="visual-step bg-slate-50 border-slate-200">
+                    <div class="flex flex-col md:flex-row justify-between items-center gap-4 text-center">
+                        <div class="p-3 bg-white rounded shadow border border-gray-200 w-full md:w-1/4">
+                            <span class="font-bold block text-indigo-700">Local Device</span>
+                            <span class="text-xs code-font">192.168.1.15</span>
+                        </div>
+                        <i class="fas fa-arrow-right hidden md:block text-gray-400"></i>
+                        <div class="p-4 bg-black text-white rounded shadow w-full md:w-1/3">
+                            <span class="font-bold block text-amber-400">Router (NAT)</span>
+                        </div>
+                        <i class="fas fa-arrow-right hidden md:block text-gray-400"></i>
+                        <div class="p-3 bg-white rounded shadow border border-gray-200 w-full md:w-1/4">
+                            <span class="font-bold block text-green-700">Web Server</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-slate-900 border-t border-slate-700 mt-16 text-white py-12">
+        <div class="container mx-auto px-4 flex flex-col items-center">
+            <h3 class="text-xl font-semibold mb-4 tracking-wide text-white">Our Partners</h3>
+            <div class="w-full max-w-5xl">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 items-center justify-items-center gap-8 mb-8">
+                    <a href="#" class="transition-transform hover:scale-105"><img alt="AISEC" class="h-24 w-auto object-contain" src="https://rednexus.academy/assets/aisec-CPMZqhQs.png"></a>
+                    <a href="#" class="transition-transform hover:scale-105"><img alt="GDG" class="h-28 w-auto object-contain" src="https://rednexus.academy/assets/gdg-Df6L4Ii3.png"></a>
+                    <a href="#" class="transition-transform hover:scale-105"><img alt="Green Armor" class="h-24 w-auto object-contain" src="https://rednexus.academy/assets/greenarmor-oZ_OwdCW.png"></a>
+                    <a href="#" class="transition-transform hover:scale-105"><img alt="INE" class="h-24 w-auto object-contain" src="https://ine.com/assets/logos/INE-Logo-Orange-White-Revised.svg"></a>
+                </div>
+            </div>
+            <div class="w-20 h-[2px] bg-white/40 mx-auto mb-6 rounded-full"></div>
+            <div class="flex justify-center gap-6 text-2xl mb-3">
+                <a href="https://wa.me/201003425890" class="text-[#25D366] hover:opacity-80" target="_blank"><i class="fab fa-whatsapp"></i></a>
+                <a href="https://www.facebook.com/RedNexusAcademy/" class="text-[#1877F2] hover:opacity-80" target="_blank"><i class="fab fa-facebook"></i></a>
+                <a href="https://x.com/rednexusacademy" class="text-[#1DA1F2] hover:opacity-80" target="_blank"><i class="fab fa-twitter"></i></a>
+                <a href="mailto:support@rednexus.academy" class="text-[#D14836] hover:opacity-80"><i class="fas fa-envelope"></i></a>
+            </div>
+            <p class="text-sm mt-2 text-gray-400 text-center">© 2026 RedNexus® Institute.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Subnet Calculator Logic
+        const calcInputs = document.querySelectorAll('.calc-input');
+        
+        function intToIP(int) {
+            return [(int >>> 24) & 0xFF, (int >>> 16) & 0xFF, (int >>> 8) & 0xFF, int & 0xFF].join('.');
+        }
+
+        /**
+         * Converts an integer to an IP string with the "host" part highlighted in amber
+         * based on the CIDR prefix.
+         */
+        function intToIPHighlighted(int, cidr) {
+            const octets = [(int >>> 24) & 0xFF, (int >>> 16) & 0xFF, (int >>> 8) & 0xFF, int & 0xFF];
+            const amber = (text) => `<span class="text-amber-600">${text}</span>`;
+
+            if (cidr >= 32) return octets.join('.');
+            if (cidr >= 24) return `${octets[0]}.${octets[1]}.${octets[2]}.${amber(octets[3])}`;
+            if (cidr >= 16) return `${octets[0]}.${octets[1]}.${amber(octets[2] + '.' + octets[3])}`;
+            if (cidr >= 8) return `${octets[0]}.${amber(octets[1] + '.' + octets[2] + '.' + octets[3])}`;
+            return amber(octets.join('.'));
+        }
+
+        function calculateSubnet() {
+            const o1 = parseInt(document.getElementById('c-o1').value) || 0;
+            const o2 = parseInt(document.getElementById('c-o2').value) || 0;
+            const o3 = parseInt(document.getElementById('c-o3').value) || 0;
+            const o4 = parseInt(document.getElementById('c-o4').value) || 0;
+            const cidrInput = document.getElementById('c-cidr');
+            let cidr = parseInt(cidrInput.value);
+
+            if (isNaN(cidr)) cidr = 24;
+            if (cidr < 0) cidr = 0;
+            if (cidr > 32) cidr = 32;
+
+            const ipInt = ((o1 << 24) | (o2 << 16) | (o3 << 8) | o4) >>> 0;
+            let maskInt = 0;
+            if (cidr > 0) maskInt = (0xFFFFFFFF << (32 - cidr)) >>> 0;
+
+            const netInt = (ipInt & maskInt) >>> 0;
+            const broadInt = (netInt | (~maskInt)) >>> 0;
+            const usableHosts = (cidr >= 31) ? 0 : (broadInt - netInt - 1);
+
+            document.getElementById('res-mask').innerText = intToIP(maskInt);
+            document.getElementById('res-net').innerText = intToIP(netInt);
+            document.getElementById('res-broad').innerText = intToIP(broadInt);
+            
+            const rangeEl = document.getElementById('res-range');
+            if (cidr === 32) {
+                rangeEl.innerHTML = intToIP(netInt);
+                document.getElementById('res-hosts').innerText = "1 (Single IP)";
+            } else if (cidr === 31) {
+                rangeEl.innerHTML = `${intToIPHighlighted(netInt, cidr)} - ${intToIPHighlighted(broadInt, cidr)}`;
+                document.getElementById('res-hosts').innerText = "2 (Point-to-Point)";
+            } else {
+                rangeEl.innerHTML = `${intToIPHighlighted(netInt + 1, cidr)} - ${intToIPHighlighted(broadInt - 1, cidr)}`;
+                document.getElementById('res-hosts').innerText = usableHosts.toLocaleString();
+            }
+        }
+
+        calcInputs.forEach(input => {
+            input.addEventListener('input', () => {
+                input.value = input.value.replace(/[^0-9]/g, '');
+                calculateSubnet();
+            });
+        });
+
+        // IP Octet Validation Logic
+        const octetInputs = document.querySelectorAll('.octet-input');
+        const validationResult = document.getElementById('validation-result');
+
+        function validateOctets() {
+            let allValid = true;
+            let anyEmpty = false;
+            octetInputs.forEach(input => {
+                const val = input.value;
+                if (val === '') { anyEmpty = true; input.classList.remove('valid', 'invalid'); }
+                else {
+                    const num = parseInt(val);
+                    if (!isNaN(num) && num >= 0 && num <= 255) {
+                        input.classList.add('valid'); input.classList.remove('invalid');
+                    } else {
+                        input.classList.add('invalid'); input.classList.remove('valid');
+                        allValid = false;
+                    }
+                }
+            });
+            if (anyEmpty) { validationResult.classList.add('hidden'); return; }
+            validationResult.classList.remove('hidden');
+            if (allValid) {
+                validationResult.innerText = "✅ All octets are valid!";
+                validationResult.className = "text-center px-6 py-3 rounded-lg font-bold text-lg bg-green-100 text-green-700 mt-4";
+            } else {
+                validationResult.innerText = "❌ Invalid octet range (0-255).";
+                validationResult.className = "text-center px-6 py-3 rounded-lg font-bold text-lg bg-red-100 text-red-700 mt-4";
+            }
+        }
+
+        octetInputs.forEach((input, index) => {
+            input.addEventListener('input', () => {
+                input.value = input.value.replace(/[^0-9]/g, '');
+                if (input.value.length === 3 && index < 3) octetInputs[index + 1].focus();
+                validateOctets();
+            });
+        });
+
+        const scrollToTopBtn = document.getElementById("scrollToTopBtn");
+        window.addEventListener("scroll", () => {
+            if (window.scrollY > 300) scrollToTopBtn.classList.remove("opacity-0", "pointer-events-none");
+            else scrollToTopBtn.classList.add("opacity-0", "pointer-events-none");
+        });
+        scrollToTopBtn.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({ pageLanguage: 'en', includedLanguages: 'ar,en', layout: google.translate.TranslateElement.InlineLayout.SIMPLE, autoDisplay: false }, 'google_translate_element');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const techElements = document.querySelectorAll('.code-font, .terminal-prompt, .terminal-output, pre, code');
+            techElements.forEach(el => { el.classList.add('notranslate'); el.setAttribute('translate', 'no'); });
+            calculateSubnet();
+        });
+    </script>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+</body>
+</html>
