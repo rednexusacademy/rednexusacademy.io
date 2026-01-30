@@ -223,8 +223,8 @@
                             <div class="bg-slate-900 p-3 rounded-lg code-font mt-2 code-block-wrapper">
                                 <button class="copy-btn" onclick="copyCode(this)">Copy</button>
                                 <div class="text-green-400 terminal-prompt">cd .\neo4j-community-2025.10.1\bin\</div>
-                                <div class="text-green-400 terminal-prompt">.\neo4j.bat windows-service install</div>
-                                <div class="text-green-400 terminal-prompt">or > .\neo4j.bat install-service</div>
+                                <div class="text-green-400 terminal-prompt">.\neo4j.bat windows-service install  </div>
+                                
                                 <pre class="terminal-output text-sm text-green-200">Neo4j service installed.</pre>
                             </div>
                         </div>
@@ -236,14 +236,17 @@
                             <div class="bg-slate-900 p-3 rounded-lg code-font mt-2 code-block-wrapper">
                                 <button class="copy-btn" onclick="copyCode(this)">Copy</button>
                                 <div class="text-green-400 terminal-prompt">net start neo4j</div>
-                                 <div class="text-green-400 terminal-prompt">or > .\neo4j.bat start </div>
                                 <pre class="terminal-output text-sm text-green-200">The Neo4j Graph Database - neo4j service is starting..
 The Neo4j Graph Database - neo4j service was started successfully.</pre>
                             </div>
                         </div>
                     </li>
                 </ol>
-
+                <p> if there is problem then use : 
+                :\AD\Tools\neo4j-community-4.4.5-windows\neo4j-community4.4.5\bin>neo4j.bat install-service 
+                    Neo4j service installed 
+                C:\AD\Tools\neo4j-community-4.4.5-windows\neo4j-community4.4.5\bin>neo4j.bat start 
+                </p>
                 <h3 class="text-xl font-bold text-gray-800 border-b pb-3 mt-8 mb-4">Phase B: GUI and Client Setup</h3>
                 
                 <!-- Step 3: Initial Login -->
@@ -983,5 +986,6 @@ The Neo4j Graph Database - neo4j service was started successfully.</pre>
 </body>
 
 </html>
+
 
 
