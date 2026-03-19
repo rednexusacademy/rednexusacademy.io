@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bypassing SSL Pinning in Android Apps (2026 Edition) - RedNexus Academy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            scroll-behavior: smooth;
+            font-size: 18px;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f9fafb;
+            line-height: 1.6;
+        }
+        .code-font { font-family: 'JetBrains Mono', monospace; }
+        .title-font { font-family: 'Times New Roman', Times, serif; }
+
+        /* Progress Bar */
+        #progress-bar {
+            position: fixed;
+            top: 0; left: 0;
+            height: 4px;
+            width: 0%;
+            background: linear-gradient(90deg, #0e7490, #06b6d4);
+            z-index: 9999;
+            transition: width 0.1s linear;
+        }
+
+        /* Terminal Styling */
+        .terminal-prompt::before {
+            content: 'rednexus@academy[/academy]$ ';
+            color: #10b981;
+            margin-right: 0.5rem;
+            user-select: none;
+        }
+        .terminal-prompt[data-prompt]::before { content: attr(data-prompt); }
+        .terminal-output {
+            white-space: pre-wrap;
+            color: #e5e7eb;
+            padding-top: 8px;
+            border-top: 1px solid #334155;
+            margin-top: 8px;
+        }
+        .bg-console { background-color: #1e293b; }
+
+        /* Step List Styling */
+        .step-list { list-style: none; counter-reset: step-counter; }
+        .step-list > li {
+            counter-increment: step-counter;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: flex-start;
+        }
+        .step-list > li::before {
+            content: counter(step-counter);
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 2.2rem;
+            height: 2.2rem;
+            min-width: 2.2rem;
+            border-radius: 9999px;
+            background-color: #f59e0b;
+            color: white;
+            font-weight: bold;
+            margin-right: 1.2rem;
+        }
+
+        /* Visual Step Containers */
+        .visual-step {
+            display: flex;
+            flex-direction: column; gap: 1rem; margin-bottom: 2rem; padding: 1.25rem;
+            border: 1px solid #e5e7eb; border-radius: 0.75rem; background-color: #ffffff;
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+        }
+        .visual-step img {
+            width: 100%;
+            height: auto;
+            border-radius: 0.5rem;
+            border: 1px solid #d1d5db;
+            max-width: 100%;
+            cursor: zoom-in;
+            transition: transform 0.2s ease;
+        }
+        .visual-step img:hover { transform: scale(1.01); }
+
+        /* Lightbox */
+        #image-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            cursor: zoom-out;
+            padding: 20px;
+        }
+        #image-overlay img {
+            max-width: 95%; max-height: 95%;
+            border-radius: 8px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+            animation: zoomIn 0.3s ease-out;
+        }
+        @keyframes zoomIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to   { transform: scale(1);   opacity: 1; }
+        }
+
+        /* Copy Button */
+        .code-block-wrapper { position: relative; }
+        .copy-btn {
+            position: absolute; top: 0.5rem; right: 0.5rem;
+            background-color: rgba(255,255,255,0.1); color: #e5e7eb;
+            border: 1px solid rgba(255,255,255,0.2); border-radius: 0.375rem;
+            padding: 0.25rem 0.5rem; font-size: 0.75rem; cursor: pointer;
+            opacity: 0; transition: opacity 0.2s;
+        }
+        .code-block-wrapper:hover .copy-btn { opacity: 1; }
+        .copy-btn.copied { background-color: #10b981; color: white; }
+
+        /* Table Styling */
+        .styled-table { width: 100%; border-collapse: collapse; margin: 25px 0; font-size: 0.95em; border-radius: 8px 8px 0 0; overflow: hidden; box-shadow: 0 0 20px rgba(0,0,0,0.05); }
+        .styled-table thead tr { background-color: #0e7490; color: #ffffff; text-align: left; font-weight: bold; }
+        .styled-table th, .styled-table td { padding: 14px 18px; }
+        .styled-table tbody tr { border-bottom: 1px solid #dddddd; }
+        .styled-table tbody tr:nth-of-type(even) { background-color: #f3f4f6; }
+        .styled-table tbody tr:last-of-type { border-bottom: 2px solid #0e7490; }
+
+        /* Highlights */
+        .hl-cyan  { color: #0e7490; font-weight: 700; }
+        .hl-amber { color: #d97706; font-weight: 700; }
+        .hl-red   { color: #dc2626; font-weight: 700; }
+        .hl-green { color: #16a34a; font-weight: 700; }
+
+        /* Callout Cards */
+        .callout { border-radius: 0.75rem; padding: 1.25rem 1.5rem; margin: 1.5rem 0; display: flex; gap: 1rem; align-items: flex-start; }
+        .callout-tip     { background: #fef3c7; border-left: 4px solid #f59e0b; }
+        .callout-warning { background: #fee2e2; border-left: 4px solid #dc2626; }
+        .callout-info    { background: #ecfeff; border-left: 4px solid #0e7490; }
+        .callout-icon    { font-size: 1.4rem; line-height: 1; min-width: 2rem; }
+        .callout-title   { font-weight: 700; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.3rem; }
+
+        /* TOC Sidebar */
+        #toc-sidebar {
+            position: fixed;
+            left: 1.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 40;
+            display: none;
+        }
+        @media (min-width: 1280px) { #toc-sidebar { display: block; } }
+        .toc-link {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #9ca3af;
+            padding: 0.3rem 0.75rem;
+            border-left: 2px solid transparent;
+            transition: all 0.2s;
+            white-space: nowrap;
+            max-width: 160px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-decoration: none;
+        }
+        .toc-link:hover  { color: #0e7490; border-left-color: #0e7490; }
+        .toc-link.active { color: #0e7490; border-left-color: #0e7490; font-weight: 700; }
+
+        /* Scroll Reveal */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.55s ease, transform 0.55s ease;
+        }
+        .reveal.visible { opacity: 1; transform: translateY(0); }
+
+        /* Method Tabs */
+        .tab-btn { padding: 0.6rem 1.4rem; font-weight: 600; font-size: 0.9rem; border-radius: 0.375rem 0.375rem 0 0; cursor: pointer; transition: all 0.2s; color: #6b7280; border-bottom: 3px solid transparent; background: transparent; }
+        .tab-btn.active { color: #0e7490; border-bottom-color: #0e7490; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Quiz Styles */
+        .quiz-card { background: white; border-top: 4px solid #0e7490; border-radius: 0 0 0.75rem 0.75rem; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.07); margin: 2rem 0; }
+        .quiz-title { font-weight: 700; color: #0e7490; margin-bottom: 1rem; font-size: 1rem; }
+        .quiz-option { display: block; padding: 0.6rem 1rem; margin: 0.4rem 0; background: #f3f4f6; border-radius: 0.5rem; cursor: pointer; transition: background 0.2s; font-size: 0.9rem; }
+        .quiz-option:hover { background: #e5e7eb; }
+        .quiz-option.correct { background: #dcfce7; color: #166534; font-weight: 700; }
+        .quiz-option.wrong   { background: #fee2e2; color: #991b1b; }
+        .quiz-btn { margin-top: 1rem; padding: 0.5rem 1.5rem; background: #0e7490; color: white; border-radius: 0.5rem; font-weight: 600; font-size: 0.9rem; cursor: pointer; border: none; }
+        .quiz-btn:hover { background: #0c6278; }
+        .quiz-result { margin-top: 0.75rem; padding: 0.75rem; border-radius: 0.5rem; font-size: 0.9rem; display: none; font-weight: 600; }
+        .quiz-result.correct { background: #dcfce7; color: #166534; }
+        .quiz-result.wrong   { background: #fee2e2; color: #991b1b; }
+
+        /* Translate Widget */
+        .goog-te-gadget { font-family: 'Inter', sans-serif !important; font-size: 0px !important; }
+        .goog-te-gadget .goog-te-combo { padding: 0.5rem !important; border-radius: 0.375rem !important; border: 1px solid #e5e7eb !important; font-size: 0.875rem !important; }
+        .goog-te-gadget span { display: none !important; }
+        .goog-te-banner-frame { display: none !important; }
+        body { top: 0 !important; }
+    </style>
+</head>
+<body class="text-gray-700 relative">
+
+    <!-- Progress Bar -->
+    <div id="progress-bar"></div>
+
+    <!-- Lightbox Overlay -->
+    <div id="image-overlay" onclick="closeImage()">
+        <img id="enlarged-img" src="" alt="Enlarged View">
+    </div>
+
+    <!-- Scroll To Top -->
+    <button id="scrollToTopBtn" class="fixed bottom-8 right-8 bg-cyan-700 text-white p-3 rounded-full shadow-lg opacity-0 transition-opacity duration-300 hover:bg-cyan-800 focus:outline-none z-50 pointer-events-none">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <!-- TOC Sidebar -->
+    <nav id="toc-sidebar">
+        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 pl-3">Contents</p>
+        <a href="#section-overview"    class="toc-link" data-target="section-overview">Overview</a>
+        <a href="#section-how-it-works" class="toc-link" data-target="section-how-it-works">How It Works</a>
+        <a href="#section-environment" class="toc-link" data-target="section-environment">Lab Setup</a>
+        <a href="#section-methods"     class="toc-link" data-target="section-methods">Bypass Methods</a>
+        <a href="#section-advanced"    class="toc-link" data-target="section-advanced">Advanced</a>
+        <a href="#section-mitre"       class="toc-link" data-target="section-mitre">MITRE ATT&amp;CK</a>
+    </nav>
+
+    <!-- Header -->
+    <header class="bg-white/95 backdrop-blur-md sticky top-1 z-50 shadow-lg border-b border-cyan-700/30">
+        <nav class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <a href="https://www.rednexus.academy" class="flex items-center">
+                        <img src="https://rednexus.academy/assets/rednexus_logo-D4Odd875.png" alt="RedNexus" class="h-10 w-auto mr-3 rounded-md bg-black px-1">
+                    </a>
+                    <a href="https://blogs.rednexus.academy" class="text-cyan-700 border border-cyan-700 hover:bg-cyan-50 transition px-4 py-2 rounded-md font-bold text-sm">Blogs</a>
+                </div>
+                <div class="hidden md:flex md:items-center md:space-x-4">
+                    <a href="https://rednexus.academy/certificates" class="text-gray-600 hover:text-cyan-700 px-3 py-2 font-bold text-sm">Certificates</a>
+                    <a href="https://rednexus.academy/courses"      class="text-gray-600 hover:text-cyan-700 px-3 py-2 font-bold text-sm">Courses</a>
+                    <a href="https://hossamshady.medium.com/"        class="text-gray-600 hover:text-cyan-700 px-3 py-2 font-bold text-sm">Medium</a>
+                    <a href="mailto:support@rednexus.academy"        class="text-cyan-700 border border-cyan-700 hover:bg-cyan-50 transition px-4 py-2 rounded-md font-bold text-sm ml-2">Contact Us</a>
+                    <div id="google_translate_element" class="ml-2"></div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-12 py-10 md:py-16">
+
+        <!-- Title -->
+        <section id="lecture-title" class="mb-16">
+            <div class="bg-white p-10 rounded-xl shadow-2xl border border-gray-300 text-center">
+                <h1 class="text-4xl md:text-5xl font-extrabold text-cyan-700 uppercase tracking-tight title-font">Bypassing SSL Pinning in Android Apps</h1>
+                <p class="mt-4 text-gray-500 font-medium text-lg italic">2026 Edition — From Frida to Manual Smali Patching</p>
+                <div class="flex flex-wrap justify-center gap-3 mt-6">
+                    <span class="bg-cyan-100 text-cyan-800 text-xs font-bold px-3 py-1 rounded-full uppercase">Mobile Security</span>
+                    <span class="bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1 rounded-full uppercase">Android</span>
+                    <span class="bg-red-100 text-red-800 text-xs font-bold px-3 py-1 rounded-full uppercase">Penetration Testing</span>
+                    <span class="bg-slate-100 text-slate-700 text-xs font-bold px-3 py-1 rounded-full uppercase">Bug Bounty</span>
+                </div>
+            </div>
+        </section>
+
+        <div class="visual-step mb-10">
+            <img src="https://dzone.com/storage/temp/11082893-certpinningdiagram.png" alt="Certificate Pinning Diagram" onclick="zoomImage(this)">
+        </div>
+
+        <!-- Overview -->
+        <section id="section-overview" class="mb-16 pt-10 -mt-10 reveal">
+            <h2 class="text-3xl font-bold text-cyan-700 mb-6 border-l-4 border-cyan-700 pl-4">Overview</h2>
+            <p class="text-gray-600 mb-6 leading-relaxed">
+                When you point <span class="hl-amber">Burp Suite</span> at a modern Android app and see nothing — no traffic, just a blank proxy history — SSL Pinning is usually the reason. <span class="hl-cyan">SSL Pinning</span> (also called Certificate Pinning) is a defense mechanism that forces an app to only accept a specific certificate or public key, rather than trusting any certificate signed by a CA in the system trust store.
+            </p>
+            <p class="text-gray-600 mb-6 leading-relaxed">
+                For a penetration tester or bug bounty hunter, this is the first wall you need to break down before you can intercept, replay, or modify the app's traffic. This blog covers <span class="hl-red">every known bypass technique in 2026</span> — from a one-liner with Objection to manual Smali patching when all automated tools fail.
+            </p>
+
+            <div class="callout callout-warning">
+                <div class="callout-icon">⚠️</div>
+                <div>
+                    <div class="callout-title text-red-700">Legal Disclaimer</div>
+                    <p class="text-sm text-red-800">All techniques in this blog are for authorized security testing and educational purposes only. Only test applications you own or have explicit written permission to test. Unauthorized interception of network traffic is illegal.</p>
+                </div>
+            </div>
+
+            <div class="visual-step mb-8">
+                <h4 class="font-bold text-gray-800">How MITM Attacks Work — What SSL Pinning Prevents</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <img src="https://marvel-b1-cdn.bc0a.com/f00000000310757/www.fortinet.com/content/dam/fortinet/images/cyberglossary/types-mitm-attacks.png" alt="Types of MITM Attacks" onclick="zoomImage(this)">
+                    <img src="https://www.imperva.com/learn/wp-content/uploads/sites/13/2017/09/man-in-the-middle-mitm-attack.png" alt="MITM Attack Diagram" onclick="zoomImage(this)">
+                </div>
+            </div>
+
+            <h3 class="text-2xl font-bold text-gray-800 mb-4 mt-8">Why SSL Pinning Exists</h3>
+            <div class="overflow-x-auto">
+                <table class="styled-table">
+                    <thead><tr><th>Attack Prevented</th><th>How Pinning Stops It</th></tr></thead>
+                    <tbody>
+                        <tr><td class="font-bold">MITM via Rogue CA</td><td>App rejects certificates not matching the pinned hash, even if signed by a trusted CA.</td></tr>
+                        <tr><td class="font-bold">Proxy Interception</td><td>Burp/ZAP certificates are rejected — attacker sees no traffic.</td></tr>
+                        <tr><td class="font-bold">Compromised System CA</td><td>Even if a device-level CA is trusted, the app enforces its own pin.</td></tr>
+                        <tr><td class="font-bold">Dynamic Analysis</td><td>Makes it harder for researchers to inspect API endpoints and tokens.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 class="text-2xl font-bold text-gray-800 mb-4 mt-8">Certificate vs. Public Key Pinning</h3>
+            <p class="text-gray-600 mb-4 leading-relaxed">
+                There are two main variants of SSL Pinning used in Android apps. Understanding the difference is important because each requires a slightly different bypass strategy:
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div class="bg-white p-6 rounded-xl shadow border-l-4 border-cyan-700">
+                    <h4 class="font-bold text-xl mb-3 text-gray-800"><i class="fas fa-certificate text-cyan-700 mr-2"></i>Certificate Pinning</h4>
+                    <p class="text-sm text-gray-700 mb-3">The app stores the <span class="hl-cyan">entire certificate</span> (DER/PEM format) and compares it byte-for-byte with what the server presents.</p>
+                    <ul class="text-sm space-y-1 text-gray-700">
+                        <li><i class="fas fa-times text-red-500 mr-2"></i>Breaks every time cert expires/renews</li>
+                        <li><i class="fas fa-check text-green-600 mr-2"></i>Simple to implement</li>
+                        <li><i class="fas fa-check text-green-600 mr-2"></i>Easy to identify in APK assets folder</li>
+                    </ul>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow border-l-4 border-amber-500">
+                    <h4 class="font-bold text-xl mb-3 text-gray-800"><i class="fas fa-key text-amber-600 mr-2"></i>Public Key Pinning (HPKP)</h4>
+                    <p class="text-sm text-gray-700 mb-3">The app stores only the <span class="hl-amber">SHA-256 hash of the public key</span> (SubjectPublicKeyInfo). Survives certificate renewal as long as the key pair stays the same.</p>
+                    <ul class="text-sm space-y-1 text-gray-700">
+                        <li><i class="fas fa-check text-green-600 mr-2"></i>Survives cert renewal</li>
+                        <li><i class="fas fa-times text-red-500 mr-2"></i>Harder to bypass — hash must match exactly</li>
+                        <li><i class="fas fa-check text-green-600 mr-2"></i>Used by OkHttp CertificatePinner</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Quiz 1 -->
+            <div class="quiz-card">
+                <div class="quiz-title">🧠 Quick Check — Section 1</div>
+                <p class="text-sm text-gray-700 mb-3 font-semibold">What does SSL Pinning primarily prevent?</p>
+                <div id="q1-opts">
+                    <label class="quiz-option"><input type="radio" name="q1" value="a" class="mr-2">Brute-force login attempts</label>
+                    <label class="quiz-option"><input type="radio" name="q1" value="b" class="mr-2">MITM attacks by enforcing a specific certificate or public key</label>
+                    <label class="quiz-option"><input type="radio" name="q1" value="c" class="mr-2">SQL injection in the app's backend</label>
+                    <label class="quiz-option"><input type="radio" name="q1" value="d" class="mr-2">Reverse engineering of the APK file</label>
+                </div>
+                <button class="quiz-btn" onclick="checkQuiz('q1','b','SSL Pinning forces the app to reject any certificate that does not match the pinned value — exactly what MITM proxies produce.')">Check Answer</button>
+                <div id="q1-result" class="quiz-result"></div>
+            </div>
+        </section>
+
+        <!-- How It Works -->
+        <section id="section-how-it-works" class="mb-16 pt-10 -mt-10 reveal">
+            <h2 class="text-3xl font-bold text-cyan-700 mb-6 border-l-4 border-cyan-700 pl-4">How SSL Pinning Works</h2>
+
+            <p class="text-gray-600 mb-6 leading-relaxed">
+                Developers implement pinning in multiple ways. Understanding which type is used is essential before picking a bypass strategy.
+            </p>
+
+            <!-- ASCII Flow -->
+            <div class="bg-slate-900 p-6 rounded-xl shadow-2xl code-font mb-8">
+                <h4 class="text-cyan-400 mb-4 border-b border-cyan-800 pb-2 uppercase text-xs font-bold">Normal TLS vs. Pinned TLS Flow</h4>
+                <pre class="text-green-400 text-sm overflow-x-auto">
+  ┌─────────────┐      HTTPS Request       ┌─────────────────┐
+  │  Android App │ ───────────────────────► │   Server (API)  │
+  └─────────────┘                           └─────────────────┘
+         │                                          │
+         │        ◄─── Server Certificate ──────────┘
+         │
+         ▼  WITHOUT PINNING:
+  ┌──────────────────────────────────────┐
+  │  Check: Is cert signed by system CA? │
+  │  YES → Trust → Connection OK ✅       │
+  └──────────────────────────────────────┘
+
+         ▼  WITH PINNING:
+  ┌────────────────────────────────────────────────────────┐
+  │  Check 1: Is cert signed by trusted CA?  → YES         │
+  │  Check 2: Does cert hash match pinned value? → NO ❌   │
+  │  Result: SSLPeerUnverifiedException → Connection KILLED │
+  └────────────────────────────────────────────────────────┘
+                </pre>
+            </div>
+
+            <div class="visual-step mb-8">
+                <h4 class="font-bold text-gray-800">Certificate Pinning Architecture — Full Overview</h4>
+                <img src="https://approov.io/hubfs/Approov%20Dynamic%20Pinning.png" alt="Dynamic Pinning Architecture" onclick="zoomImage(this)">
+            </div>
+
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">Pinning Implementation Types</h3>
+            <div class="overflow-x-auto">
+                <table class="styled-table">
+                    <thead><tr><th>Type</th><th>Where It Lives</th><th>Bypass Difficulty</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="hl-cyan">Network Security Config (NSC)</span></td>
+                            <td><code class="bg-gray-100 px-1 rounded text-sm">res/xml/network_security_config.xml</code></td>
+                            <td><span class="hl-green">Easy</span> — Edit XML and repackage</td>
+                        </tr>
+                        <tr>
+                            <td><span class="hl-cyan">OkHttp CertificatePinner</span></td>
+                            <td>Java/Kotlin source, compiled into DEX</td>
+                            <td><span class="hl-amber">Medium</span> — Frida/Objection usually works</td>
+                        </tr>
+                        <tr>
+                            <td><span class="hl-cyan">TrustManager Override</span></td>
+                            <td>Custom <code class="bg-gray-100 px-1 rounded text-sm">X509TrustManager</code> in Java</td>
+                            <td><span class="hl-amber">Medium</span> — Hook with Frida</td>
+                        </tr>
+                        <tr>
+                            <td><span class="hl-cyan">TrustKit Library</span></td>
+                            <td>Third-party SDK (datatheorem/TrustKit)</td>
+                            <td><span class="hl-amber">Medium</span> — Frida multi-unpinning script</td>
+                        </tr>
+                        <tr>
+                            <td><span class="hl-cyan">Native (libssl / BoringSSL)</span></td>
+                            <td>C/C++ native library (.so file)</td>
+                            <td><span class="hl-red">Hard</span> — Requires native hooking or binary patching</td>
+                        </tr>
+                        <tr>
+                            <td><span class="hl-cyan">Custom Certificate Validation</span></td>
+                            <td>Proprietary framework, obfuscated</td>
+                            <td><span class="hl-red">Very Hard</span> — Full reverse engineering needed</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="visual-step mb-8">
+                <h4 class="font-bold text-gray-800">Certificate Pinning — Implementation Methods</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <img src="https://cdn-ileccmi.nitrocdn.com/htlMkhXZxNIECpbIgwrirqfPjtGuUTvW/assets/images/optimized/rev-1326e13/resources.appsealing.com/4-svc/wp-content/uploads/2023/09/27163714/ssl-1024x626.jpg.webp" alt="SSL Pinning Methods" onclick="zoomImage(this)">
+                    <img src="https://gorkemkara.net/wp-content/uploads/2024/10/ssl-pinning-android-okhttp-guide-share.webp" alt="OkHttp SSL Pinning Android" onclick="zoomImage(this)">
+                </div>
+            </div>
+
+            <div class="callout callout-info mt-6">
+                <div class="callout-icon">🔍</div>
+                <div>
+                    <div class="callout-title text-cyan-800">Did You Know?</div>
+                    <p class="text-sm text-cyan-900">Android's Network Security Configuration (NSC) was introduced in Android 7.0 (Nougat). Apps targeting API 24+ no longer trust user-installed CA certificates by default — which is exactly why simply installing Burp's CA certificate stopped working on modern apps.</p>
+                </div>
+            </div>
+
+            <h3 class="text-2xl font-bold text-gray-800 mb-4 mt-8">Where to Find Pinning Logic in an APK</h3>
+            <p class="text-gray-600 mb-4 leading-relaxed">
+                Before choosing a bypass method, identify which pinning implementation the app uses. These are the most common locations:
+            </p>
+            <div class="overflow-x-auto">
+                <table class="styled-table">
+                    <thead><tr><th>File / Class</th><th>Indicator String</th><th>Pinning Type</th></tr></thead>
+                    <tbody>
+                        <tr><td><code class="bg-gray-100 px-1 rounded text-sm">res/xml/network_security_config.xml</code></td><td><code class="bg-gray-100 px-1 rounded text-sm">&lt;pin-set&gt;</code></td><td>Android NSC</td></tr>
+                        <tr><td><code class="bg-gray-100 px-1 rounded text-sm">smali/okhttp3/CertificatePinner.smali</code></td><td><code class="bg-gray-100 px-1 rounded text-sm">sha256/</code></td><td>OkHttp Pinner</td></tr>
+                        <tr><td><code class="bg-gray-100 px-1 rounded text-sm">assets/*.cer / assets/*.pem</code></td><td>Binary certificate file</td><td>Bundled Cert Pinning</td></tr>
+                        <tr><td><code class="bg-gray-100 px-1 rounded text-sm">smali/*/TrustManager*.smali</code></td><td><code class="bg-gray-100 px-1 rounded text-sm">checkServerTrusted</code></td><td>Custom TrustManager</td></tr>
+                        <tr><td><code class="bg-gray-100 px-1 rounded text-sm">lib/arm64-v8a/libssl.so</code></td><td>Native library present</td><td>BoringSSL / Native</td></tr>
+                        <tr><td><code class="bg-gray-100 px-1 rounded text-sm">lib/arm64-v8a/libflutter.so</code></td><td>Flutter app</td><td>Flutter BoringSSL</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="bg-slate-900 p-6 rounded-xl shadow-2xl code-font mt-6 mb-4 code-block-wrapper">
+                <h4 class="text-cyan-400 mb-4 border-b border-cyan-800 pb-2 uppercase text-xs font-bold">Quick Recon — Identify Pinning Type in Seconds</h4>
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <div class="text-amber-300 text-xs mb-2"># Decompile first</div>
+                <div class="text-green-400 terminal-prompt">apktool d target.apk -o decoded && cd decoded</div>
+                <div class="text-amber-300 text-xs mt-3 mb-1"># Check NSC config</div>
+                <div class="text-green-400 terminal-prompt">grep -r "pin-set\|certificateTransparency" res/xml/</div>
+                <div class="text-amber-300 text-xs mt-3 mb-1"># Check for bundled certs</div>
+                <div class="text-green-400 terminal-prompt">find assets/ -name "*.cer" -o -name "*.pem" -o -name "*.der" -o -name "*.crt" 2>/dev/null</div>
+                <div class="text-amber-300 text-xs mt-3 mb-1"># Check OkHttp pinning</div>
+                <div class="text-green-400 terminal-prompt">grep -r "CertificatePinner\|sha256/" smali/ -l</div>
+                <div class="text-amber-300 text-xs mt-3 mb-1"># Check for native libs</div>
+                <div class="text-green-400 terminal-prompt">ls lib/arm64-v8a/ | grep -E "ssl|flutter|react"</div>
+            </div>
+        </section>
+
+        <!-- Lab Setup -->
+        <section id="section-environment" class="mb-16 pt-10 -mt-10 reveal">
+            <h2 class="text-3xl font-bold text-cyan-700 mb-6 border-l-4 border-cyan-700 pl-4">Lab Setup</h2>
+            <p class="text-gray-600 mb-6 leading-relaxed">Before any bypass, set up your interception environment correctly. You need a proxy, a device or emulator, and your bypass toolchain.</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+                <div class="bg-white p-6 rounded-xl shadow border-l-4 border-cyan-700">
+                    <h4 class="font-bold text-xl mb-3 text-gray-800"><i class="fas fa-laptop-code text-cyan-700 mr-2"></i>Attacker Machine</h4>
+                    <ul class="text-sm space-y-2 text-gray-700">
+                        <li><i class="fas fa-check text-green-600 mr-2"></i>Kali Linux / Parrot OS</li>
+                        <li><i class="fas fa-check text-green-600 mr-2"></i>Burp Suite (Community or Pro)</li>
+                        <li><i class="fas fa-check text-green-600 mr-2"></i>ADB (Android Debug Bridge)</li>
+                        <li><i class="fas fa-check text-green-600 mr-2"></i>Python 3 + pip</li>
+                        <li><i class="fas fa-check text-green-600 mr-2"></i>apktool, apksigner, zipalign</li>
+                        <li><i class="fas fa-check text-green-600 mr-2"></i>Node.js (for apk-mitm)</li>
+                    </ul>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow border-l-4 border-cyan-700">
+                    <h4 class="font-bold text-xl mb-3 text-gray-800"><i class="fas fa-mobile-alt text-cyan-700 mr-2"></i>Target Device</h4>
+                    <ul class="text-sm space-y-2 text-gray-700">
+                        <li><i class="fas fa-check text-green-600 mr-2"></i>Rooted Android device <span class="text-gray-400">(preferred)</span></li>
+                        <li><i class="fas fa-check text-green-600 mr-2"></i>OR Android Emulator (API 28–33)</li>
+                        <li><i class="fas fa-check text-green-600 mr-2"></i>USB Debugging enabled</li>
+                        <li><i class="fas fa-check text-green-600 mr-2"></i>Frida server installed (rooted)</li>
+                        <li><i class="fas fa-check text-green-600 mr-2"></i>Same Wi-Fi network as attacker</li>
+                        <li><i class="fas fa-check text-green-600 mr-2"></i>Proxy configured to Burp listener</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="visual-step mb-8">
+                <h4 class="font-bold text-gray-800">Frida — Dynamic Instrumentation Framework</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <img src="https://www.apriorit.com/wp-content/uploads/2023/09/1pict-blog-article-Frida-as-a-Multi-platform-Instrument-for-Dynamic-Analysis.jpg" alt="Frida Dynamic Analysis" onclick="zoomImage(this)">
+                    <img src="https://www.fortinet.com/content/dam/fortinet-blog/article-images/defeating_an_android_packer_with_frida/frida_02.png" alt="Frida Android Process Hooking" onclick="zoomImage(this)">
+                </div>
+            </div>
+
+            <!-- Install Frida -->
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">Step 1 — Install Frida Toolchain</h3>
+            <div class="bg-slate-900 p-6 rounded-xl shadow-2xl code-font mb-8 code-block-wrapper">
+                <h4 class="text-cyan-400 mb-4 border-b border-cyan-800 pb-2 uppercase text-xs font-bold">Install Frida on Kali</h4>
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <div class="text-green-400 terminal-prompt">pip install frida-tools objection</div>
+                <div class="text-green-400 terminal-prompt">frida --version</div>
+                <div class="terminal-output">16.2.1</div>
+            </div>
+
+            <!-- Deploy Frida Server -->
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">Step 2 — Deploy Frida Server on Device</h3>
+            <div class="bg-slate-900 p-8 rounded-xl shadow-2xl code-font mb-8 code-block-wrapper">
+                <h4 class="text-cyan-400 mb-4 border-b border-cyan-800 pb-2 uppercase text-xs font-bold">Push & Start Frida Server (Rooted Device)</h4>
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <div class="text-amber-300 text-xs mb-3"># 1. Find device architecture</div>
+                <div class="text-green-400 terminal-prompt">adb shell getprop ro.product.cpu.abi</div>
+                <div class="terminal-output">arm64-v8a</div>
+                <div class="text-amber-300 text-xs mt-3 mb-1"># 2. Download matching Frida server from github.com/frida/frida/releases</div>
+                <div class="text-green-400 terminal-prompt">wget https://github.com/frida/frida/releases/download/16.2.1/frida-server-16.2.1-android-arm64.xz</div>
+                <div class="text-green-400 terminal-prompt">unxz frida-server-16.2.1-android-arm64.xz</div>
+                <div class="text-amber-300 text-xs mt-3 mb-1"># 3. Push to device and start</div>
+                <div class="text-green-400 terminal-prompt">adb push frida-server-16.2.1-android-arm64 /data/local/tmp/frida-server</div>
+                <div class="text-green-400 terminal-prompt">adb shell "chmod 755 /data/local/tmp/frida-server"</div>
+                <div class="text-green-400 terminal-prompt">adb shell "/data/local/tmp/frida-server &"</div>
+                <div class="text-amber-300 text-xs mt-3 mb-1"># 4. Verify connection</div>
+                <div class="text-green-400 terminal-prompt">frida-ps -U</div>
+                <div class="terminal-output">  PID  Name
+-----  ----------------
+  312  com.android.phone
+  421  com.google.android.gms
+  ...</div>
+            </div>
+
+            <div class="visual-step mb-8">
+                <h4 class="font-bold text-gray-800">Frida Console — Live Device Process List</h4>
+                <img src="https://support.corellium.com/assets/images/frida-console-d1cc4bd034f61d5b0f91ee17fee5da2a.png" alt="Frida Console" onclick="zoomImage(this)">
+            </div>
+
+            <!-- Burp Proxy Setup -->
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">Step 3 — Configure Burp Proxy</h3>
+            <div class="bg-slate-900 p-6 rounded-xl shadow-2xl code-font mb-8 code-block-wrapper">
+                <h4 class="text-cyan-400 mb-4 border-b border-cyan-800 pb-2 uppercase text-xs font-bold">Export & Install Burp CA Certificate</h4>
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <div class="text-amber-300 text-xs mb-2"># Export Burp CA from: Proxy > Options > Import/Export CA Certificate > DER format</div>
+                <div class="text-amber-300 text-xs mb-3"># Then push to device and install as system cert (rooted) or user cert</div>
+                <div class="text-green-400 terminal-prompt">adb push burp_cert.der /sdcard/burp_cert.cer</div>
+                <div class="text-amber-300 text-xs mt-3 mb-1"># Install as System CA (rooted — most reliable)</div>
+                <div class="text-green-400 terminal-prompt">adb shell</div>
+                <div class="text-green-400" data-prompt="# ">openssl x509 -inform DER -in /sdcard/burp_cert.cer -out /sdcard/burp.pem</div>
+                <div class="text-green-400" data-prompt="# ">CERT_HASH=$(openssl x509 -inform PEM -subject_hash_old -in /sdcard/burp.pem | head -1)</div>
+                <div class="text-green-400" data-prompt="# ">cp /sdcard/burp.pem /system/etc/security/cacerts/${CERT_HASH}.0</div>
+                <div class="text-green-400" data-prompt="# ">chmod 644 /system/etc/security/cacerts/${CERT_HASH}.0</div>
+            </div>
+
+            <div class="visual-step mb-8">
+                <h4 class="font-bold text-gray-800">Burp Suite — Android Traffic Interception Setup</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <img src="https://mas.owasp.org/assets/Images/Chapters/0x04f/BURP.png" alt="OWASP BURP Android Interception" onclick="zoomImage(this)">
+                    <img src="https://www.schellman.com/hs-fs/hubfs/5.png?width=1252&name=5.png" alt="Catching Mobile Traffic in Burp" onclick="zoomImage(this)">
+                </div>
+            </div>
+
+            <h3 class="text-2xl font-bold text-gray-800 mb-4 mt-8">Step 4 — Configure Device Proxy</h3>
+            <p class="text-gray-600 mb-4 leading-relaxed">Point the Android device's Wi-Fi proxy to your Kali machine's IP and Burp's listening port (default 8080).</p>
+            <div class="bg-slate-900 p-6 rounded-xl shadow-2xl code-font mb-6 code-block-wrapper">
+                <h4 class="text-cyan-400 mb-4 border-b border-cyan-800 pb-2 uppercase text-xs font-bold">Set Proxy via ADB (No Wi-Fi Settings Needed)</h4>
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <div class="text-amber-300 text-xs mb-2"># Set global proxy to Kali IP:8080</div>
+                <div class="text-green-400 terminal-prompt">adb shell settings put global http_proxy 192.168.1.100:8080</div>
+                <div class="text-amber-300 text-xs mt-3 mb-1"># Verify it was set</div>
+                <div class="text-green-400 terminal-prompt">adb shell settings get global http_proxy</div>
+                <div class="terminal-output">192.168.1.100:8080</div>
+                <div class="text-amber-300 text-xs mt-3 mb-1"># Remove proxy after testing</div>
+                <div class="text-green-400 terminal-prompt">adb shell settings put global http_proxy :0</div>
+            </div>
+
+            <div class="callout callout-tip">
+                <div class="callout-icon">💡</div>
+                <div>
+                    <div class="callout-title text-amber-700">Pro Tip — Android Emulator</div>
+                    <p class="text-sm text-amber-900">Use the Android emulator with <code class="bg-amber-100 px-1 rounded">-writable-system</code> flag for easy system CA installation without a physical rooted device: <code class="bg-amber-100 px-1 rounded">emulator -avd &lt;name&gt; -writable-system</code></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Bypass Methods (Tabbed) -->
+        <section id="section-methods" class="mb-16 pt-10 -mt-10 reveal">
+            <h2 class="text-3xl font-bold text-cyan-700 mb-6 border-l-4 border-cyan-700 pl-4">SSL Pinning Bypass Methods</h2>
+            <p class="text-gray-600 mb-6">Six proven techniques ordered from easiest to most advanced. Always try them in this order during a pentest.</p>
+
+            <!-- Tabs -->
+            <div class="border-b border-gray-200 mb-0 flex flex-wrap gap-1">
+                <button class="tab-btn active" onclick="switchTab('method1', this)">Method 1 — Objection</button>
+                <button class="tab-btn"        onclick="switchTab('method2', this)">Method 2 — Frida Script</button>
+                <button class="tab-btn"        onclick="switchTab('method3', this)">Method 3 — apk-mitm</button>
+                <button class="tab-btn"        onclick="switchTab('method4', this)">Method 4 — NSC Patch</button>
+                <button class="tab-btn"        onclick="switchTab('method5', this)">Method 5 — Smali Patch</button>
+                <button class="tab-btn"        onclick="switchTab('method6', this)">Method 6 — Native Hook</button>
+            </div>
+
+            <div class="bg-white border border-gray-200 border-t-0 rounded-b-xl p-6 shadow">
+
+                <!-- Method 1 — Objection -->
+                <div id="tab-method1" class="tab-content active">
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Method 1: Objection (Easiest — Rooted Device)</h3>
+                    <p class="text-gray-600 mb-4 text-sm">Objection wraps Frida with a high-level CLI. A single command disables SSL pinning on most apps that use standard Android SSL APIs. Works on <span class="hl-green">rooted devices</span> only.</p>
+
+                    <div class="bg-slate-900 p-6 rounded-xl code-font mb-4 code-block-wrapper">
+                        <h4 class="text-cyan-400 mb-4 border-b border-cyan-800 pb-2 uppercase text-xs font-bold">Objection One-Liner Bypass</h4>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        <div class="text-amber-300 text-xs mb-2"># 1. Find the package name</div>
+                        <div class="text-green-400 terminal-prompt">frida-ps -Uia | grep -i target_app</div>
+                        <div class="terminal-output">com.example.targetapp</div>
+                        <div class="text-amber-300 text-xs mt-3 mb-1"># 2. Launch with Objection and disable pinning</div>
+                        <div class="text-green-400 terminal-prompt">objection -g com.example.targetapp explore</div>
+                        <div class="terminal-output">Using USB device `Pixel 6`
+Agent injected and responds ok!
+
+com.example.targetapp on (google: 13) [usb] #</div>
+                        <div class="text-green-400" data-prompt="com.example.targetapp on (google: 13) [usb] # ">android sslpinning disable</div>
+                        <div class="terminal-output">[android-ssl-pinning-bypass] Custom, Empty TrustManager ready
+[android-ssl-pinning-bypass] OkHTTP 3 check: Intercepted
+[android-ssl-pinning-bypass] OkHTTP 4 check: Intercepted
+[android-ssl-pinning-bypass] TrustManagerImpl check: Intercepted
+Job: a1b2c3d4 - Started ✅</div>
+                    </div>
+                    <div class="visual-step mb-6">
+                        <h4 class="font-bold text-gray-800">Objection — Runtime Mobile Exploration</h4>
+                        <img src="https://sensepost.com/img/pages/blog/2017/objection-mobile-runtime-exploration/5ac32b2576faa11d2115b4a5bd6e7fd5.png" alt="Objection Mobile Exploration" onclick="zoomImage(this)">
+                    </div>
+                    <div class="callout callout-tip">
+                        <div class="callout-icon">💡</div>
+                        <div>
+                            <div class="callout-title text-amber-700">When This Fails</div>
+                            <p class="text-sm text-amber-900">If Objection only intercepts some requests but not all, the app likely uses multiple pinning methods (OkHttp + custom TrustManager). Combine with Method 2 for broader coverage.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Method 2 — Frida Script -->
+                <div id="tab-method2" class="tab-content">
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Method 2: Frida Multi-Unpinning Script (Rooted Device)</h3>
+                    <p class="text-gray-600 mb-4 text-sm">The <span class="hl-cyan">akabe1/frida-multiple-unpinning</span> script from Frida CodeShare covers more hooks than Objection, including TrustKit, Conscrypt, and custom TrustManagers.</p>
+
+                    <div class="bg-slate-900 p-6 rounded-xl code-font mb-4 code-block-wrapper">
+                        <h4 class="text-cyan-400 mb-4 border-b border-cyan-800 pb-2 uppercase text-xs font-bold">Frida CodeShare — Universal Unpinning</h4>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        <div class="text-amber-300 text-xs mb-2"># Use directly from CodeShare (requires internet)</div>
+                        <div class="text-green-400 terminal-prompt">frida --codeshare akabe1/frida-multiple-unpinning -f com.example.targetapp -U</div>
+                        <div class="text-amber-300 text-xs mt-3 mb-1"># OR: Download and use offline</div>
+                        <div class="text-green-400 terminal-prompt">wget https://codeshare.frida.re/@akabe1/frida-multiple-unpinning/raw/bypass.js</div>
+                        <div class="text-green-400 terminal-prompt">frida -U -f com.example.targetapp -l bypass.js --no-pause</div>
+                    </div>
+
+                    <p class="text-gray-600 mb-4 text-sm">You can also use HTTPToolkit's more comprehensive script that covers <span class="hl-amber">native BoringSSL</span> and React Native apps:</p>
+
+                    <div class="bg-slate-900 p-6 rounded-xl code-font mb-4 code-block-wrapper">
+                        <h4 class="text-cyan-400 mb-4 border-b border-cyan-800 pb-2 uppercase text-xs font-bold">HTTPToolkit Frida Script (Broader Coverage)</h4>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        <div class="text-green-400 terminal-prompt">git clone https://github.com/httptoolkit/frida-interception-and-unpinning</div>
+                        <div class="text-green-400 terminal-prompt">cd frida-interception-and-unpinning</div>
+                        <div class="text-amber-300 text-xs mt-2 mb-1"># Edit config.js — paste your Burp CA cert PEM content into CERT_PEM</div>
+                        <div class="text-green-400 terminal-prompt">nano config.js</div>
+                        <div class="text-amber-300 text-xs mt-2 mb-1"># Run against target app</div>
+                        <div class="text-green-400 terminal-prompt">frida -U -f com.example.targetapp -l config.js -l android/android-certificate-unpinning.js --no-pause</div>
+                    </div>
+                    <div class="visual-step mt-6">
+                        <h4 class="font-bold text-gray-800">Frida — Bypassing OkHttp Certificate Pinning</h4>
+                        <img src="https://captmeelo.com/static/img/2020-02-24-bypass-okhttp-cert-pinning/frida-universal.png" alt="Frida OkHttp Bypass" onclick="zoomImage(this)">
+                    </div>
+                </div>
+
+                <!-- Method 3 — apk-mitm -->
+                <div id="tab-method3" class="tab-content">
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Method 3: apk-mitm (Non-Rooted Device)</h3>
+                    <p class="text-gray-600 mb-4 text-sm"><span class="hl-cyan">apk-mitm</span> patches the APK file itself — it modifies the Network Security Config, disables certificate transparency, and injects Frida Gadget. Then you reinstall the patched APK on any device. No root required.</p>
+
+                    <div class="bg-slate-900 p-6 rounded-xl code-font mb-4 code-block-wrapper">
+                        <h4 class="text-cyan-400 mb-4 border-b border-cyan-800 pb-2 uppercase text-xs font-bold">apk-mitm — Patch & Reinstall</h4>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        <div class="text-amber-300 text-xs mb-2"># Install apk-mitm</div>
+                        <div class="text-green-400 terminal-prompt">npm install -g apk-mitm</div>
+                        <div class="text-amber-300 text-xs mt-3 mb-1"># Patch the APK (downloads apktool/apksigner automatically)</div>
+                        <div class="text-green-400 terminal-prompt">apk-mitm target_app.apk</div>
+                        <div class="terminal-output">  ✔ Decoding APK file
+  ✔ Modifying app manifest
+  ✔ Modifying network security config
+  ✔ Disabling certificate pinning
+  ✔ Encoding patched APK file
+  ✔ Signing patched APK file
+
+  Done!  target_app-patched.apk</div>
+                        <div class="text-amber-300 text-xs mt-3 mb-1"># Uninstall original, install patched version</div>
+                        <div class="text-green-400 terminal-prompt">adb uninstall com.example.targetapp</div>
+                        <div class="text-green-400 terminal-prompt">adb install target_app-patched.apk</div>
+                    </div>
+
+                    <div class="callout callout-warning">
+                        <div class="callout-icon">⚠️</div>
+                        <div>
+                            <div class="callout-title text-red-700">Root Detection</div>
+                            <p class="text-sm text-red-800">apk-mitm works on non-rooted devices, but the patched APK may trigger root detection or app integrity checks (SafetyNet/Play Integrity API). If the app refuses to open, combine with Method 2 to also bypass root detection.</p>
+                        </div>
+                    </div>
+
+                    <h4 class="font-bold text-gray-800 mt-6 mb-3">What apk-mitm Actually Does Internally</h4>
+                    <p class="text-gray-600 mb-4 text-sm leading-relaxed">Understanding internals helps when it fails. apk-mitm performs these 5 operations on the APK:</p>
+                    <ul class="step-list text-sm text-gray-700 mt-2">
+                        <li><span>Decompiles the APK using apktool into Smali + resource files.</span></li>
+                        <li><span>Modifies <code class="bg-gray-100 px-1 rounded">AndroidManifest.xml</code> to reference a new <code class="bg-gray-100 px-1 rounded">network_security_config.xml</code>.</span></li>
+                        <li><span>Creates/replaces <code class="bg-gray-100 px-1 rounded">res/xml/network_security_config.xml</code> to trust user CAs and disable pinning.</span></li>
+                        <li><span>Injects Frida Gadget into the app's main Activity smali code as a native library load.</span></li>
+                        <li><span>Re-signs the APK with a fresh debug keystore so it installs cleanly on the device.</span></li>
+                    </ul>
+                </div>
+
+                <!-- Method 4 — NSC Patch -->
+                <div id="tab-method4" class="tab-content">
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Method 4: Manual Network Security Config Patch</h3>
+                    <p class="text-gray-600 mb-4 text-sm">If the app uses Android's built-in <span class="hl-cyan">Network Security Configuration</span> for pinning, you can directly edit the XML config inside the APK and repackage it. No Frida needed.</p>
+
+                    <div class="bg-slate-900 p-6 rounded-xl code-font mb-6 code-block-wrapper">
+                        <h4 class="text-cyan-400 mb-4 border-b border-cyan-800 pb-2 uppercase text-xs font-bold">Step-by-Step NSC Bypass</h4>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        <div class="text-amber-300 text-xs mb-2"># 1. Decompile APK</div>
+                        <div class="text-green-400 terminal-prompt">apktool d target_app.apk -o target_app_decoded</div>
+                        <div class="text-amber-300 text-xs mt-3 mb-1"># 2. Check AndroidManifest.xml for NSC reference</div>
+                        <div class="text-green-400 terminal-prompt">grep -r "networkSecurityConfig" target_app_decoded/</div>
+                        <div class="terminal-output">AndroidManifest.xml: android:networkSecurityConfig="@xml/network_security_config"</div>
+                        <div class="text-amber-300 text-xs mt-3 mb-1"># 3. Edit the config file</div>
+                        <div class="text-green-400 terminal-prompt">nano target_app_decoded/res/xml/network_security_config.xml</div>
+                    </div>
+
+                    <div class="visual-step mb-6">
+                        <h4 class="font-bold text-gray-800">Android Network Security Config — Bypass via XML Edit</h4>
+                        <img src="https://sensepost.com/img/pages/blog/2018/tip-toeing-past-android-7-s-network-security-configuration/6948f0f3e38cf3517d7a9521bd2c2ee0.png" alt="NSC Android 7 Bypass" onclick="zoomImage(this)">
+                    </div>
+
+                    <p class="text-gray-600 mb-3 text-sm font-semibold">Replace or modify the file contents to trust user CAs:</p>
+                    <div class="bg-slate-900 p-6 rounded-xl code-font mb-6 code-block-wrapper">
+                        <h4 class="text-cyan-400 mb-4 border-b border-cyan-800 pb-2 uppercase text-xs font-bold">Modified network_security_config.xml</h4>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        <pre class="text-green-400 text-sm overflow-x-auto">&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;network-security-config&gt;
+    &lt;base-config cleartextTrafficPermitted="true"&gt;
+        &lt;trust-anchors&gt;
+            &lt;!-- Trust system CAs --&gt;
+            &lt;certificates src="system" /&gt;
+            &lt;!-- Trust user-installed CAs (Burp Suite CA) --&gt;
+            &lt;certificates src="user" /&gt;
+        &lt;/trust-anchors&gt;
+    &lt;/base-config&gt;
+    &lt;!-- Remove any &lt;domain-config&gt; with &lt;pin-set&gt; blocks --&gt;
+&lt;/network-security-config&gt;</pre>
+                    </div>
+
+                    <div class="bg-slate-900 p-6 rounded-xl code-font mb-4 code-block-wrapper">
+                        <h4 class="text-cyan-400 mb-4 border-b border-cyan-800 pb-2 uppercase text-xs font-bold">Rebuild, Sign and Install</h4>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        <div class="text-amber-300 text-xs mb-2"># Rebuild APK</div>
+                        <div class="text-green-400 terminal-prompt">apktool b target_app_decoded -o target_app_patched_unsigned.apk</div>
+                        <div class="text-amber-300 text-xs mt-3 mb-1"># Generate a debug keystore (if you don't have one)</div>
+                        <div class="text-green-400 terminal-prompt">keytool -genkey -v -keystore debug.keystore -alias debug -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=Android Debug,O=Android,C=US"</div>
+                        <div class="text-amber-300 text-xs mt-3 mb-1"># Sign the APK</div>
+                        <div class="text-green-400 terminal-prompt">apksigner sign --ks debug.keystore --ks-pass pass:android target_app_patched_unsigned.apk</div>
+                        <div class="text-amber-300 text-xs mt-3 mb-1"># Install</div>
+                        <div class="text-green-400 terminal-prompt">adb install target_app_patched_unsigned.apk</div>
+                    </div>
+                </div>
+
+                <!-- Method 5 — Smali Patch -->
+                <div id="tab-method5" class="tab-content">
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Method 5: Manual Smali Code Patching</h3>
+                    <p class="text-gray-600 mb-4 text-sm">When automated tools fail and the pinning is implemented in Java/Kotlin (not native), you can decompile to <span class="hl-cyan">Smali</span> bytecode and directly patch the verification method to always return true or skip the check.</p>
+
+                    <div class="overflow-x-auto mb-6">
+                        <table class="styled-table">
+                            <thead><tr><th>Tool</th><th>Purpose</th><th>Command</th></tr></thead>
+                            <tbody>
+                                <tr><td>apktool</td><td>Decompile APK → Smali</td><td><code class="bg-gray-100 px-1 rounded text-xs">apktool d app.apk</code></td></tr>
+                                <tr><td>jadx / jadx-gui</td><td>Decompile to readable Java</td><td><code class="bg-gray-100 px-1 rounded text-xs">jadx app.apk</code></td></tr>
+                                <tr><td>grep</td><td>Find pinning code in Smali</td><td><code class="bg-gray-100 px-1 rounded text-xs">grep -r "CertificatePinner" smali/</code></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="visual-step mb-6">
+                        <h4 class="font-bold text-gray-800">APKTool — Decompiling APK to Smali Bytecode</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <img src="https://cyberastral.com/wp-content/uploads/2023/10/cyberastral.com-41-jpg.webp" alt="APKTool Usage" onclick="zoomImage(this)">
+                            <img src="https://epic.blog/assets/2020-07-27-reverse-engineering-android-app/android-app/decompilation.png" alt="Android Decompilation" onclick="zoomImage(this)">
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900 p-6 rounded-xl code-font mb-6 code-block-wrapper">
+                        <h4 class="text-cyan-400 mb-4 border-b border-cyan-800 pb-2 uppercase text-xs font-bold">Find Pinning Code in Smali</h4>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        <div class="text-amber-300 text-xs mb-2"># Find common pinning class names</div>
+                        <div class="text-green-400 terminal-prompt">grep -r "CertificatePinner\|checkServerTrusted\|SSLContext\|TrustManager\|pinCert" target_app_decoded/smali/ -l</div>
+                        <div class="terminal-output">target_app_decoded/smali/com/example/app/security/CertPinManager.smali
+target_app_decoded/smali/okhttp3/CertificatePinner.smali</div>
+                        <div class="text-amber-300 text-xs mt-3 mb-1"># Inspect the check method</div>
+                        <div class="text-green-400 terminal-prompt">cat target_app_decoded/smali/okhttp3/CertificatePinner.smali | grep -A 20 "check("</div>
+                    </div>
+
+                    <p class="text-gray-600 mb-3 text-sm font-semibold">Patching strategy — make the check method return immediately without throwing an exception:</p>
+
+                    <div class="bg-slate-900 p-6 rounded-xl code-font mb-4 code-block-wrapper">
+                        <h4 class="text-cyan-400 mb-4 border-b border-cyan-800 pb-2 uppercase text-xs font-bold">Before vs. After — Smali Patch</h4>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        <div class="text-red-400 text-xs mb-2"># BEFORE (original checkServerTrusted — throws exception on mismatch)</div>
+                        <pre class="text-red-300 text-sm overflow-x-auto">.method public checkServerTrusted([Ljava/security/cert/X509Certificate;Ljava/lang/String;)V
+    .registers 4
+    const-string v0, "Certificate not trusted"
+    invoke-static {v0}, Lokhttp3/internal/Util;-&gt;checkNotNull(Ljava/lang/Object;)V
+    ...
+    throw v1
+.end method</pre>
+                        <div class="text-green-400 text-xs mt-4 mb-2"># AFTER (patched — returns immediately, no check)</div>
+                        <pre class="text-green-300 text-sm overflow-x-auto">.method public checkServerTrusted([Ljava/security/cert/X509Certificate;Ljava/lang/String;)V
+    .registers 4
+    return-void
+.end method</pre>
+                    </div>
+
+                    <div class="callout callout-tip">
+                        <div class="callout-icon">💡</div>
+                        <div>
+                            <div class="callout-title text-amber-700">jadx-gui Tip</div>
+                            <p class="text-sm text-amber-900">Use <code class="bg-amber-100 px-1 rounded">jadx-gui</code> to read the Java decompiled code to understand the logic, then edit the corresponding <code class="bg-amber-100 px-1 rounded">.smali</code> file with the patch. Never edit Java directly — only Smali is used when rebuilding with apktool.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Method 6 — Native Hook -->
+                <div id="tab-method6" class="tab-content">
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Method 6: Native Library Hooking (Advanced)</h3>
+                    <p class="text-gray-600 mb-4 text-sm">When the app uses <span class="hl-red">native C/C++ code</span> (React Native, Flutter, or custom TLS with BoringSSL/libssl), Java-level Frida hooks won't intercept anything. You need to hook at the native layer.</p>
+
+                    <div class="bg-slate-900 p-6 rounded-xl code-font mb-6 code-block-wrapper">
+                        <h4 class="text-cyan-400 mb-4 border-b border-cyan-800 pb-2 uppercase text-xs font-bold">Identify Native SSL Usage</h4>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        <div class="text-amber-300 text-xs mb-2"># Unzip APK and check .so files</div>
+                        <div class="text-green-400 terminal-prompt">unzip target_app.apk -d target_app_raw</div>
+                        <div class="text-green-400 terminal-prompt">ls target_app_raw/lib/arm64-v8a/</div>
+                        <div class="terminal-output">libssl.so  libcrypto.so  libflutter.so  libreactnativejni.so</div>
+                        <div class="text-amber-300 text-xs mt-3 mb-1"># Find SSL_CTX_set_verify or SSL_set_verify_result symbols</div>
+                        <div class="text-green-400 terminal-prompt">nm -D target_app_raw/lib/arm64-v8a/libssl.so | grep -i verify</div>
+                        <div class="terminal-output">0000000000012ab0 T SSL_CTX_set_verify
+0000000000012be4 T SSL_set_verify_result</div>
+                    </div>
+
+                    <div class="bg-slate-900 p-6 rounded-xl code-font mb-4 code-block-wrapper">
+                        <h4 class="text-cyan-400 mb-4 border-b border-cyan-800 pb-2 uppercase text-xs font-bold">Frida Native Hook Script</h4>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        <pre class="text-green-400 text-sm overflow-x-auto">// native_unpin.js — hook SSL_CTX_set_verify in libssl.so
+Java.perform(function() {
+    var libssl = Module.findBaseAddress("libssl.so");
+    if (libssl) {
+        // Hook SSL_CTX_set_verify to always set mode=SSL_VERIFY_NONE (0)
+        var SSL_CTX_set_verify = Module.findExportByName("libssl.so", "SSL_CTX_set_verify");
+        if (SSL_CTX_set_verify) {
+            Interceptor.attach(SSL_CTX_set_verify, {
+                onEnter: function(args) {
+                    args[1] = ptr(0);  // SSL_VERIFY_NONE
+                    console.log("[*] SSL_CTX_set_verify hooked — pinning disabled");
+                }
+            });
+        }
+
+        // For BoringSSL — hook SSL_set_verify_result
+        var SSL_set_verify_result = Module.findExportByName("libssl.so", "SSL_set_verify_result");
+        if (SSL_set_verify_result) {
+            Interceptor.attach(SSL_set_verify_result, {
+                onEnter: function(args) {
+                    args[1] = ptr(1);  // X509_V_OK
+                }
+            });
+        }
+    }
+});</pre>
+                        <div class="text-amber-300 text-xs mt-3 mb-1"># Run the native hook script</div>
+                        <div class="text-green-400 terminal-prompt">frida -U -f com.example.targetapp -l native_unpin.js --no-pause</div>
+                    </div>
+
+                    <div class="callout callout-warning">
+                        <div class="callout-icon">⚠️</div>
+                        <div>
+                            <div class="callout-title text-red-700">Flutter Apps</div>
+                            <p class="text-sm text-red-800">Flutter uses its own bundled BoringSSL inside <code class="bg-red-100 px-1 rounded">libflutter.so</code>. The function names may be stripped. Use <code class="bg-red-100 px-1 rounded">ssl_verify_peer_cert</code> offset finding or the specialized <a href="https://github.com/NVISOsecurity/disable-flutter-tls-verification" class="underline font-bold">disable-flutter-tls-verification</a> Frida script.</p>
+                        </div>
+                    </div>
+
+                    <h4 class="font-bold text-gray-800 mt-6 mb-3">Flutter SSL Pinning — Dedicated Bypass</h4>
+                    <p class="text-gray-600 mb-4 text-sm leading-relaxed">Flutter apps bundle their own <span class="hl-red">libflutter.so</span> with a stripped BoringSSL. The function names are removed, so you need to find offsets manually or use the specialized script:</p>
+                    <div class="bg-slate-900 p-6 rounded-xl shadow-2xl code-font mb-4 code-block-wrapper">
+                        <h4 class="text-cyan-400 mb-4 border-b border-cyan-800 pb-2 uppercase text-xs font-bold">Flutter TLS Bypass — disable-flutter-tls-verification</h4>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        <div class="text-amber-300 text-xs mb-2"># Clone the specialized Flutter bypass tool</div>
+                        <div class="text-green-400 terminal-prompt">git clone https://github.com/NVISOsecurity/disable-flutter-tls-verification</div>
+                        <div class="text-amber-300 text-xs mt-3 mb-1"># Run against Flutter app</div>
+                        <div class="text-green-400 terminal-prompt">frida -U -f com.example.flutterapp -l disable-flutter-tls-verification/disable-flutter-tls.js --no-pause</div>
+                        <div class="terminal-output">[*] Flutter version: 3.x
+[*] Found ssl_verify_peer_cert at offset: 0x00abc123
+[*] TLS verification disabled ✅</div>
+                        <div class="text-amber-300 text-xs mt-3 mb-1"># Alternative: React Native apps use the same Frida multi-unpinning script</div>
+                        <div class="text-green-400 terminal-prompt">frida --codeshare akabe1/frida-multiple-unpinning -f com.example.reactnativeapp -U</div>
+                    </div>
+                    <div class="callout callout-tip">
+                        <div class="callout-icon">💡</div>
+                        <div>
+                            <div class="callout-title text-amber-700">Identifying Flutter vs React Native</div>
+                            <p class="text-sm text-amber-900">Run <code class="bg-amber-100 px-1 rounded">ls lib/arm64-v8a/</code> inside the decoded APK. Flutter apps will have <code class="bg-amber-100 px-1 rounded">libflutter.so</code>. React Native apps will have <code class="bg-amber-100 px-1 rounded">libreactnativejni.so</code>. Each needs a different native bypass approach.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- end tab wrapper -->
+
+            <!-- Quiz 2 -->
+            <div class="quiz-card mt-8">
+                <div class="quiz-title">🧠 Quick Check — Bypass Methods</div>
+                <p class="text-sm text-gray-700 mb-3 font-semibold">Which method works on a NON-rooted Android device without needing Frida server installed?</p>
+                <div id="q2-opts">
+                    <label class="quiz-option"><input type="radio" name="q2" value="a" class="mr-2">Objection with <code>android sslpinning disable</code></label>
+                    <label class="quiz-option"><input type="radio" name="q2" value="b" class="mr-2">frida --codeshare akabe1/frida-multiple-unpinning</label>
+                    <label class="quiz-option"><input type="radio" name="q2" value="c" class="mr-2">apk-mitm (patches the APK and reinstalls it)</label>
+                    <label class="quiz-option"><input type="radio" name="q2" value="d" class="mr-2">Native libssl.so hooking</label>
+                </div>
+                <button class="quiz-btn" onclick="checkQuiz('q2','c','apk-mitm patches the APK file itself and injects Frida Gadget into it — no Frida server or root is needed on the device. The patched APK installs and runs on any Android device.')">Check Answer</button>
+                <div id="q2-result" class="quiz-result"></div>
+            </div>
+        </section>
+
+        <!-- Advanced -->
+        <section id="section-advanced" class="mb-16 pt-10 -mt-10 reveal">
+            <h2 class="text-3xl font-bold text-cyan-700 mb-6 border-l-4 border-cyan-700 pl-4">Advanced Scenarios</h2>
+
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">Scenario A — App Uses Play Integrity API (SafetyNet)</h3>
+            <p class="text-gray-600 mb-4 leading-relaxed">
+                Modern apps (banking, payments) may check <span class="hl-red">Play Integrity API</span> or old SafetyNet Attestation before trusting the environment. If you bypass SSL pinning but the app sees a rooted device or modified APK, it will refuse to work.
+            </p>
+
+            <div class="overflow-x-auto mb-6">
+                <table class="styled-table">
+                    <thead><tr><th>Defense</th><th>Bypass Tool</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td><span class="hl-red">Root Detection</span></td><td>Objection: <code class="bg-gray-100 px-1 rounded text-xs">android root disable</code></td><td>Disables common root checks at runtime</td></tr>
+                        <tr><td><span class="hl-red">SafetyNet Attestation</span></td><td>MagiskHide / Shamiko module</td><td>Hides root from attestation calls</td></tr>
+                        <tr><td><span class="hl-red">Play Integrity API</span></td><td>PlayIntegrityFix (Magisk)</td><td>Spoofs device certification verdict</td></tr>
+                        <tr><td><span class="hl-red">App Signature Check</span></td><td>Frida hook on PackageManager</td><td>Intercepts getSignatures() call</td></tr>
+                        <tr><td><span class="hl-red">Emulator Detection</span></td><td>Frida hook Build class fields</td><td>Spoof device model/manufacturer</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="visual-step mb-8">
+                <h4 class="font-bold text-gray-800">Android Penetration Testing — Attack Surface Overview</h4>
+                <img src="https://www.hackthebox.com/storage/blog/7x4SM2d3AxjqjyrrV3CxJXPImBuIbfbI.jpg" alt="Android Pentest HackTheBox" onclick="zoomImage(this)">
+            </div>
+
+            <div class="bg-slate-900 p-6 rounded-xl code-font mb-8 code-block-wrapper">
+                <h4 class="text-cyan-400 mb-4 border-b border-cyan-800 pb-2 uppercase text-xs font-bold">Combined Root + SSL Pinning Disable via Objection</h4>
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <div class="text-green-400 terminal-prompt">objection -g com.example.bankapp explore</div>
+                <div class="text-green-400" data-prompt="com.example.bankapp [usb] # ">android root disable</div>
+                <div class="terminal-output">[android-root-detection-bypass] Hooked 12 methods - Root checks disabled ✅</div>
+                <div class="text-green-400" data-prompt="com.example.bankapp [usb] # ">android sslpinning disable</div>
+                <div class="terminal-output">[android-ssl-pinning-bypass] Job started ✅</div>
+            </div>
+
+            <h3 class="text-2xl font-bold text-gray-800 mb-4 mt-10">Scenario A2 — App Uses Signature Verification</h3>
+            <p class="text-gray-600 mb-4 leading-relaxed">
+                When you repackage an APK (via apk-mitm or manual patch), the app is re-signed with a debug keystore. Many security-conscious apps verify their own APK signature at runtime and kill themselves if the signature doesn't match the original. Here's how to bypass it with Frida:
+            </p>
+            <div class="bg-slate-900 p-6 rounded-xl shadow-2xl code-font mb-6 code-block-wrapper">
+                <h4 class="text-cyan-400 mb-4 border-b border-cyan-800 pb-2 uppercase text-xs font-bold">Hook PackageManager.getSignatures() — Bypass Signature Check</h4>
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <pre class="text-green-400 text-sm overflow-x-auto">// signature_bypass.js
+Java.perform(function() {
+    var PackageManager = Java.use("android.app.ApplicationPackageManager");
+
+    PackageManager.getPackageInfo.overload(
+        "java.lang.String", "int"
+    ).implementation = function(packageName, flags) {
+        var result = this.getPackageInfo(packageName, flags);
+        // If app requests its own signature, return a fake matching one
+        if (packageName === "com.example.targetapp" && flags === 64) {
+            console.log("[*] Signature check intercepted — spoofing original signature");
+            // Return the result without modification
+            // (Frida already intercepts before the check fails in most cases)
+        }
+        return result;
+    };
+
+    // Also hook the newer v2 signature scheme
+    PackageManager.getPackageInfo.overload(
+        "java.lang.String", "android.content.pm.PackageManager$PackageInfoFlags"
+    ).implementation = function(packageName, flags) {
+        console.log("[*] getPackageInfo v2 hook active for: " + packageName);
+        return this.getPackageInfo(packageName, flags);
+    };
+});</pre>
+                <div class="text-green-400 terminal-prompt">frida -U -f com.example.targetapp -l signature_bypass.js --no-pause</div>
+            </div>
+
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">Scenario B — TrustKit (Third-Party Pinning Library)</h3>
+            <p class="text-gray-600 mb-4 leading-relaxed">
+                Apps using <span class="hl-cyan">TrustKit-Android</span> define pins in XML, similar to NSC but enforced by the library. The frida-multiple-unpinning script handles TrustKit automatically, but you can also patch the XML.
+            </p>
+            <div class="bg-slate-900 p-6 rounded-xl code-font mb-8 code-block-wrapper">
+                <h4 class="text-cyan-400 mb-4 border-b border-cyan-800 pb-2 uppercase text-xs font-bold">Find and Remove TrustKit Pins</h4>
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <div class="text-green-400 terminal-prompt">apktool d target_app.apk -o decoded</div>
+                <div class="text-amber-300 text-xs mt-2 mb-1"># Search for TrustKit configuration</div>
+                <div class="text-green-400 terminal-prompt">grep -r "trustkit\|com.datatheorem\|pin-set" decoded/ -l</div>
+                <div class="terminal-output">decoded/res/xml/trustkit_config.xml
+decoded/smali/com/datatheorem/android/trustkit/TrustKit.smali</div>
+                <div class="text-amber-300 text-xs mt-2 mb-1"># Edit trustkit_config.xml — remove all &lt;pin-set&gt; elements</div>
+                <div class="text-green-400 terminal-prompt">nano decoded/res/xml/trustkit_config.xml</div>
+            </div>
+
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">Scenario C — Certificate Transparency Enforced</h3>
+            <p class="text-gray-600 mb-4 leading-relaxed">
+                Android 12+ supports <span class="hl-cyan">Certificate Transparency (CT)</span> enforcement. Apps can require that server certificates are included in public CT logs. apk-mitm handles this, but for manual patching, find and remove the <code class="bg-gray-100 px-1 rounded text-sm">certificateTransparency</code> element in NSC.
+            </p>
+            <div class="bg-slate-900 p-4 rounded-xl code-font mb-6 code-block-wrapper">
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <pre class="text-amber-200 text-sm overflow-x-auto">&lt;!-- REMOVE this block from network_security_config.xml --&gt;
+&lt;domain-config&gt;
+    &lt;domain includeSubdomains="true"&gt;api.example.com&lt;/domain&gt;
+    &lt;pin-set expiration="2027-01-01"&gt;
+        &lt;pin digest="SHA-256"&gt;AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=&lt;/pin&gt;
+    &lt;/pin-set&gt;
+    &lt;certificateTransparency enabled="true"/&gt;   &lt;!-- remove this --&gt;
+&lt;/domain-config&gt;</pre>
+            </div>
+
+            <!-- Quiz 3 -->
+            <div class="quiz-card">
+                <div class="quiz-title">🧠 Quick Check — Advanced Scenarios</div>
+                <p class="text-sm text-gray-700 mb-3 font-semibold">An app intercepts your traffic after SSL pinning bypass but then crashes when it detects a rooted device. Which Objection command helps bypass root detection?</p>
+                <div id="q3-opts">
+                    <label class="quiz-option"><input type="radio" name="q3" value="a" class="mr-2"><code>android sslpinning disable</code></label>
+                    <label class="quiz-option"><input type="radio" name="q3" value="b" class="mr-2"><code>android root disable</code></label>
+                    <label class="quiz-option"><input type="radio" name="q3" value="c" class="mr-2"><code>android hooking list classes</code></label>
+                    <label class="quiz-option"><input type="radio" name="q3" value="d" class="mr-2"><code>frida-ps -U</code></label>
+                </div>
+                <button class="quiz-btn" onclick="checkQuiz('q3','b','android root disable hooks the most common root detection methods at runtime, making the app believe the device is not rooted. Run this before sslpinning disable when testing apps with root detection.')">Check Answer</button>
+                <div id="q3-result" class="quiz-result"></div>
+            </div>
+        </section>
+
+        <!-- Tool Comparison -->
+        <!-- MITRE ATT&CK -->
+        <section id="section-mitre" class="mb-16 pt-10 -mt-10 reveal">
+            <h2 class="text-3xl font-bold text-cyan-700 mb-6 border-l-4 border-cyan-700 pl-4">MITRE ATT&CK Mapping</h2>
+
+            <div class="overflow-x-auto mb-8">
+                <table class="styled-table">
+                    <thead><tr><th>Technique ID</th><th>Name</th><th>Relevance</th></tr></thead>
+                    <tbody>
+                        <tr><td class="font-bold"><span class="hl-cyan">T1539</span></td><td>Steal Web Session Cookie</td><td>SSL bypass enables token/cookie interception in transit</td></tr>
+                        <tr><td class="font-bold"><span class="hl-cyan">T1040</span></td><td>Network Sniffing</td><td>Core goal — intercepting decrypted HTTPS traffic</td></tr>
+                        <tr><td class="font-bold"><span class="hl-cyan">T1557</span></td><td>Adversary-in-the-Middle</td><td>Proxy acts as MITM after pinning is bypassed</td></tr>
+                        <tr><td class="font-bold"><span class="hl-cyan">T1406</span></td><td>Obfuscated Files or Information</td><td>Smali patching circumvents obfuscated pinning code</td></tr>
+                        <tr><td class="font-bold"><span class="hl-cyan">T1629.003</span></td><td>Disable or Modify Tools — Security Software Discovery</td><td>Disabling SSL pinning = disabling a security control</td></tr>
+                        <tr><td class="font-bold"><span class="hl-cyan">T1409</span></td><td>Stored Application Data</td><td>Post-bypass: access to API keys, tokens, user data in transit</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- CTA Banner -->
+            <div class="bg-cyan-700 text-white p-10 rounded-xl shadow-2xl flex flex-col md:flex-row items-center md:space-x-10 mt-12">
+                <div class="text-6xl mb-6 md:mb-0"><i class="fas fa-shield-alt"></i></div>
+                <div>
+                    <h4 class="font-bold text-2xl mb-4 uppercase tracking-wide">Next: Dynamic Analysis & API Fuzzing</h4>
+                    <p class="text-lg text-cyan-50 opacity-90 mb-6">
+                        Now that traffic is visible in Burp Suite, the next step is dynamic analysis — replaying requests, fuzzing API parameters, and hunting for authorization flaws, IDOR, and injection vulnerabilities.
+                    </p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-cyan-800 p-4 rounded border border-cyan-600">
+                            <span class="block text-xs font-bold uppercase text-cyan-300 mb-2">Intercept Request</span>
+                            <code class="text-sm font-mono text-white">Proxy > Intercept > ON</code>
+                        </div>
+                        <div class="bg-cyan-800 p-4 rounded border border-cyan-600">
+                            <span class="block text-xs font-bold uppercase text-cyan-300 mb-2">Send to Repeater</span>
+                            <code class="text-sm font-mono text-white">CTRL+R → Modify → Send</code>
+                        </div>
+                        <div class="bg-cyan-800 p-4 rounded border border-cyan-600">
+                            <span class="block text-xs font-bold uppercase text-cyan-300 mb-2">Fuzz Parameters</span>
+                            <code class="text-sm font-mono text-white">Send to Intruder</code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 border-t border-slate-700 mt-16 text-white py-16">
+        <div class="max-w-[1440px] mx-auto px-4 flex flex-col items-center">
+            <h3 class="text-2xl font-semibold mb-8 tracking-wide">Global Partners</h3>
+            <div class="w-full">
+                <div class="grid grid-cols-2 md:grid-cols-4 items-center justify-items-center gap-12 mb-12">
+                    <img alt="AISEC"       class="h-20 object-contain opacity-70" src="https://rednexus.academy/assets/aisec-CPMZqhQs.png">
+                    <img alt="GDG"         class="h-20 object-contain opacity-70" src="https://rednexus.academy/assets/gdg-Df6L4Ii3.png">
+                    <img alt="Green Armor" class="h-20 object-contain opacity-70" src="https://rednexus.academy/assets/greenarmor-oZ_OwdCW.png">
+                    <img alt="INE"         class="h-20 object-contain opacity-70" src="https://ine.com/assets/logos/INE-Logo-Orange-White-Revised.svg">
+                </div>
+            </div>
+            <p class="text-gray-400 text-center font-medium">© 2026 RedNexus® Institute. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // ── Progress Bar ──────────────────────────────────────────────────
+        window.addEventListener('scroll', () => {
+            const scrollTop = document.documentElement.scrollTop;
+            const docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const pct = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+            document.getElementById('progress-bar').style.width = pct + '%';
+        });
+
+        // ── Scroll To Top ─────────────────────────────────────────────────
+        const scrollToTopBtn = document.getElementById('scrollToTopBtn');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                scrollToTopBtn.classList.remove('opacity-0', 'pointer-events-none');
+            } else {
+                scrollToTopBtn.classList.add('opacity-0', 'pointer-events-none');
+            }
+        });
+        scrollToTopBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+        // ── Lightbox ──────────────────────────────────────────────────────
+        function zoomImage(imgElement) {
+            document.getElementById('enlarged-img').src = imgElement.src;
+            document.getElementById('image-overlay').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+        function closeImage() {
+            document.getElementById('image-overlay').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        // ── Copy Button ───────────────────────────────────────────────────
+        function copyCode(button) {
+            const container = button.closest('.code-block-wrapper');
+            let codeText = '';
+            const prompts = container.querySelectorAll('.terminal-prompt, [data-prompt]');
+            if (prompts.length > 0) {
+                prompts.forEach(p => {
+                    const promptAttr = p.getAttribute('data-prompt');
+                    const promptContent = promptAttr
+                        ? promptAttr
+                        : window.getComputedStyle(p, '::before').content.replace(/['"]/g, '');
+                    codeText += promptContent + p.innerText + '\n';
+                });
+            } else {
+                const pre = container.querySelector('pre, code');
+                codeText = pre ? pre.innerText : container.innerText.replace('Copy', '').trim();
+            }
+            const ta = document.createElement('textarea');
+            ta.value = codeText.trim();
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            button.innerText = 'Copied!';
+            button.classList.add('copied');
+            setTimeout(() => { button.innerText = 'Copy'; button.classList.remove('copied'); }, 2000);
+        }
+
+        // ── Tabs ──────────────────────────────────────────────────────────
+        function switchTab(id, btn) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-' + id).classList.add('active');
+            btn.classList.add('active');
+        }
+
+        // ── Quiz ──────────────────────────────────────────────────────────
+        function checkQuiz(qId, correctVal, explanation) {
+            const selected = document.querySelector(`input[name="${qId}"]:checked`);
+            const resultEl = document.getElementById(qId + '-result');
+            const options  = document.querySelectorAll(`#${qId}-opts .quiz-option`);
+            if (!selected) { resultEl.style.display='block'; resultEl.className='quiz-result wrong'; resultEl.textContent='Please select an answer first.'; return; }
+            options.forEach(opt => {
+                const radio = opt.querySelector('input');
+                opt.classList.remove('correct','wrong');
+                if (radio.value === correctVal) opt.classList.add('correct');
+                else if (radio.value === selected.value && selected.value !== correctVal) opt.classList.add('wrong');
+                radio.disabled = true;
+            });
+            resultEl.style.display = 'block';
+            if (selected.value === correctVal) {
+                resultEl.className = 'quiz-result correct';
+                resultEl.innerHTML = '✅ Correct! ' + explanation;
+            } else {
+                resultEl.className = 'quiz-result wrong';
+                resultEl.innerHTML = '❌ Not quite. ' + explanation;
+            }
+        }
+
+        // ── Scroll Reveal ─────────────────────────────────────────────────
+        const revealEls = document.querySelectorAll('.reveal');
+        const revealObs = new IntersectionObserver((entries) => {
+            entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); revealObs.unobserve(e.target); } });
+        }, { threshold: 0.08 });
+        revealEls.forEach(el => revealObs.observe(el));
+
+        // ── TOC Active Highlight ──────────────────────────────────────────
+        const tocLinks = document.querySelectorAll('.toc-link');
+        const sectionIds = ['section-overview','section-how-it-works','section-environment','section-methods','section-advanced','section-mitre'];
+        const tocObs = new IntersectionObserver((entries) => {
+            entries.forEach(e => {
+                if (e.isIntersecting) {
+                    tocLinks.forEach(l => l.classList.remove('active'));
+                    const link = document.querySelector(`.toc-link[data-target="${e.target.id}"]`);
+                    if (link) link.classList.add('active');
+                }
+            });
+        }, { rootMargin: '-30% 0px -60% 0px' });
+        sectionIds.forEach(id => { const el = document.getElementById(id); if (el) tocObs.observe(el); });
+
+        // ── Google Translate ──────────────────────────────────────────────
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+                pageLanguage: 'en',
+                includedLanguages: 'ar,en',
+                layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+                autoDisplay: false
+            }, 'google_translate_element');
+        }
+    </script>
+    <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+</body>
+</html>
